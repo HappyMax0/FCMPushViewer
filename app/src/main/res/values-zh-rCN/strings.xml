@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FCM推送查看器</string>
+    <string name="toolbar_search">搜索</string>
+    <string name="toolbar_help">帮助</string>
+    <string name="toolbar_openGcmDiagnostics">打开FCM系统日志</string>
+    <string name="help_text">此APP可以查看用户安装的应用及系统应用中，哪些应用支持谷歌FCM推送，并且可以调出FCM系统日志页面，可以查看FCM连接状态及应用推送记录。\n
+        当成功连上FCM服务器后，还需要打开支持FCM的应用的自启动权限 \n
+        （中国大陆定制系统除了微信等几个白名单APP外，默认都会限制应用自启动，其它地方的Android系统则默认不会限制应用后台运行）。\n
+        您可以点击列表中列出的应用，进入系统的应用信息页，点击“电池”选项，确保状态为“优化”，当状态为“限制”时，FCM将无法拉起应用弹出通知，这是FCM原理决定的，当来通知时，FCM会广播拉起对应应用弹出通知，如果应用按规范开发，当没有消息来的时候，应用会在后台进入缓存，并不会消耗很多电量。</string>
+</resources>
