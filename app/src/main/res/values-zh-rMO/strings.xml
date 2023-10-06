@@ -3,7 +3,10 @@
     <string name="app_name">FCMPushViewer</string>
     <string name="toolbar_search">搜索</string>
     <string name="toolbar_help">幫助</string>
-    <string name="toolbar_openGcmDiagnostics">打開FCM系統日志</string>
+    <string name="toolbar_openGcmDiagnostics">打開FCM診斷</string>
+    <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
+    <string name="shortcut_longlabel_GcmDiagnostics">FCM診斷</string>
+    <string name="shortcut_disable_GcmDiagnostics">FCM不可用</string>
     <string name="help_text">此APP可以查看用戶安裝的應用及系統應用中，哪些應用支持谷歌FCM推送，並且可以調出FCM系統日誌界面，可以查看FCM連接狀態及應用推送記錄。\n
         當成功連上FCM伺服器後，還需要打開支持FCM的應用的自啟動許可權（中國大陸的定製系統除了微信等幾個白名單APP外，預設都會限制應用自啟動，其他地方的Android系統則預設不會限制應用後臺運行）。\n
         您可以點擊列表中列出的應用，進入系統的應用信息頁，點擊“電池”選項，確保狀態為“優化”，當狀態為“限制”時，FCM將無法拉起應用彈出通知，這是FCM原理決定的，當來通知時，FCM會廣播拉起對應應用彈出通知，如果應用按規範開發，當沒有消息來的時候，應用會在後臺進入緩存，並不會消耗很多電量。</string>

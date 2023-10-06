@@ -2,7 +2,10 @@
     <string name="app_name">FCMPushViewer</string>
     <string name="toolbar_search">Search</string>
     <string name="toolbar_help">Help</string>
-    <string name="toolbar_openGcmDiagnostics">GcmDiagnostics</string>
+    <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
+    <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
+    <string name="shortcut_longlabel_GcmDiagnostics">FCM Diagnostics</string>
+    <string name="shortcut_disable_GcmDiagnostics">FCM Unavailable</string>
     <string name="help_text">This APP can check which applications installed by users and system applications support Google FCM push, and can open the FCM system log page to view FCM connection status and application push records. \n
         After successfully connected to the FCM server, you also need to enable the auto-start permission of applications that support FCM \n
         (Customized roms in Mainland of China, except for a few whitelisted apps such as WeChat, will restrict application auto-start by default, and other versions of Android systems will not restrict it by default). \n

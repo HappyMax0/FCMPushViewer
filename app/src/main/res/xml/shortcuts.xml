@@ -1,0 +1,23 @@
+<?xml version ="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Add shortcuts that launch your app to a specific screen or task. -->
+    <!-- Learn more at https://developer.android.com/guide/topics/ui/shortcuts/creating-shortcuts -->
+     <shortcut android:shortcutId="GCM_Shortcut"
+         android:enabled="true"
+         android:icon="@mipmap/fcm_shortcut"
+         android:shortcutShortLabel="@string/shortcut_shortlabel_GcmDiagnostics"
+         android:shortcutLongLabel="@string/shortcut_longlabel_GcmDiagnostics"
+         android:shortcutDisabledMessage="@string/shortcut_disable_GcmDiagnostics">
+         <intent
+             android:action="android.intent.action.VIEW"
+             android:targetClass="com.google.android.gms.gcm.GcmDiagnostics"
+             android:targetPackage="com.google.android.gms" />
+     </shortcut>
+
+    <!-- Integrate with Google Assistant App Actions for launching your app with various voice commands. -->
+    <!-- Learn more at: https://developers.google.com/assistant/app/overview -->
+    <!-- <capability android:name="actions.intent.OPEN_APP_FEATURE"> -->
+    <!--     Provide query fulfillment instructions for this capability, or bind it to a shortcut. -->
+    <!--     Learn more at: https://developers.google.com/assistant/app/action-schema -->
+    <!-- </capability> -->
+</shortcuts>
