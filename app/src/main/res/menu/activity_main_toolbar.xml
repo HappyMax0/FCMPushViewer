@@ -16,4 +16,10 @@
         android:icon="@drawable/baseline_cloud_sync"
         android:title="@string/toolbar_openGcmDiagnostics"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/HideSystemApp"
+        android:checkable="true"
+        android:icon="@drawable/baseline_android"
+        android:title="@string/toolbar_hideSystemApp"
+        app:showAsAction="never" />
 </menu>

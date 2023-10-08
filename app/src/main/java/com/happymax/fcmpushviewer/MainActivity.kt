@@ -3,6 +3,8 @@ package com.happymax.fcmpushviewer
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import android.os.Bundle
@@ -26,11 +28,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mSearchView: SearchView
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefresh: SwipeRefreshLayout
+    private lateinit var sharedPreferences: SharedPreferences
     private val appList = ArrayList<AppInfo>()
+    private var hideSystemApp:Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
         val toolbar: Toolbar = findViewById(R.id.toolBar)
         setSupportActionBar(toolbar)
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
@@ -38,9 +43,11 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
         swipeRefresh.setColorSchemeResources(R.color.purple_500)
         swipeRefresh.setOnRefreshListener {
-            getAppList()
+            getAppList(hideSystemApp)
         }
-        getAppList()
+
+        hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
+        getAppList(hideSystemApp)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -98,7 +105,33 @@ class MainActivity : AppCompatActivity() {
             })
 
         }
-
+        val checkItem = menu?.findItem(R.id.HideSystemApp)
+        if(checkItem != null){
+            hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
+            checkItem.isChecked = hideSystemApp
+            checkItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
+                override fun onMenuItemClick(item: MenuItem): Boolean {
+                    if(!item.isChecked){
+                        //Hide System App
+                        getAppList(true)
+                        hideSystemApp = true
+                        val editor = sharedPreferences.edit()
+                        editor.putBoolean("HideSystemApp", true)
+                        editor.apply()
+                        item.isChecked = true
+                    }
+                    else{
+                        getAppList(false)
+                        hideSystemApp = false
+                        val editor = sharedPreferences.edit()
+                        editor.putBoolean("HideSystemApp", false)
+                        editor.apply()
+                        item.isChecked = false
+                    }
+                    return true;
+                }
+            })
+        }
         return true
     }
 
@@ -117,6 +150,9 @@ class MainActivity : AppCompatActivity() {
                 intent.setComponent(comp)
                 startActivity(intent)
             }
+            R.id.HideSystemApp -> {
+
+            }
         }
         return true
     }
@@ -133,7 +169,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getAppList(){
+    private fun getAppList(hideSystemApp:Boolean = false){
         appList.clear()
 
         thread {
@@ -145,8 +181,12 @@ class MainActivity : AppCompatActivity() {
                             val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
                             val packageName = packageInfo.packageName
                             var icon:Drawable? = packageInfo.applicationInfo.loadIcon(packageManager);
-                            val appInfo = AppInfo(appName, packageName, icon)
-                            appList.add(appInfo)
+                            val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                            if(!(hideSystemApp && isSystemApp)){
+                                val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
+                                appList.add(appInfo)
+                            }
+
                             break
                         }
                     }

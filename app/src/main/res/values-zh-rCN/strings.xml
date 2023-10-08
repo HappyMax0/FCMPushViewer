@@ -4,6 +4,7 @@
     <string name="toolbar_search">搜索</string>
     <string name="toolbar_help">帮助</string>
     <string name="toolbar_openGcmDiagnostics">打开FCM诊断</string>
+    <string name="toolbar_hideSystemApp">隐藏系统应用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM诊断</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM不可用</string>
