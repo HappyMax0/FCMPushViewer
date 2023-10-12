@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">FCMPushViewer</string>
+    <string name="app_name">FCM Viewer</string>
     <string name="toolbar_search">Search</string>
     <string name="toolbar_help">Help</string>
     <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
