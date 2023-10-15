@@ -31,6 +31,14 @@ class MainActivity : AppCompatActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private val appList = ArrayList<AppInfo>()
     private var hideSystemApp:Boolean = false
+        get() = field
+        set(value){
+            getAppList(value)
+            val editor = sharedPreferences.edit()
+            editor.putBoolean("HideSystemApp", value)
+            editor.apply()
+            field = value
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,14 +48,13 @@ class MainActivity : AppCompatActivity() {
         setSupportActionBar(toolbar)
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
 
+        hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
+
         swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
         swipeRefresh.setColorSchemeResources(R.color.purple_500)
         swipeRefresh.setOnRefreshListener {
             getAppList(hideSystemApp)
         }
-
-        hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
-        getAppList(hideSystemApp)
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -107,25 +114,18 @@ class MainActivity : AppCompatActivity() {
         }
         val checkItem = menu?.findItem(R.id.HideSystemApp)
         if(checkItem != null){
-            hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
             checkItem.isChecked = hideSystemApp
             checkItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
                 override fun onMenuItemClick(item: MenuItem): Boolean {
                     if(!item.isChecked){
                         //Hide System App
-                        getAppList(true)
                         hideSystemApp = true
-                        val editor = sharedPreferences.edit()
-                        editor.putBoolean("HideSystemApp", true)
-                        editor.apply()
+
                         item.isChecked = true
                     }
                     else{
-                        getAppList(false)
                         hideSystemApp = false
-                        val editor = sharedPreferences.edit()
-                        editor.putBoolean("HideSystemApp", false)
-                        editor.apply()
+
                         item.isChecked = false
                     }
                     return true;

@@ -32,7 +32,6 @@ class AppInfoListAdapter(val list: List<AppInfo>) :
                 intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                 intent.setData(Uri.parse("package:" + packageName))
                 view.context.startActivity(intent)
-
             }catch (e:Exception){
                 e.printStackTrace()
                 throw e
