@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -42,8 +43,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_main)
-        sharedPreferences = getSharedPreferences("settings", Context.MODE_PRIVATE)
+        sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE)
         val toolbar: Toolbar = findViewById(R.id.toolBar)
         setSupportActionBar(toolbar)
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
