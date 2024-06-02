@@ -1,5 +1,6 @@
 package com.happymax.fcmpushviewer
 
+import android.app.AlertDialog
 import android.content.ComponentName
 import android.content.Intent
 import android.content.SharedPreferences
@@ -17,6 +18,8 @@ import androidx.core.view.MenuItemCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.google.android.gms.common.ConnectionResult
+import com.google.android.gms.common.GoogleApiAvailability
 import kotlin.concurrent.thread
 
 
@@ -38,6 +41,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val apiAvailability: GoogleApiAvailability = GoogleApiAvailability.getInstance()
+        val resultCode: Int = apiAvailability.isGooglePlayServicesAvailable(this)
+        if(resultCode != ConnectionResult.SUCCESS){
+            val builder = AlertDialog.Builder(this@MainActivity)
+            builder.setTitle(R.string.dialog_title_error)
+                .setMessage(R.string.dialog_msg_missing_gms)
+                .setPositiveButton(R.string.dialog_btn_ok) { dialog, which ->
+                    // OK button clicked
+                    this.finish()
+                }
+
+            val dialog = builder.create()
+            dialog.show()
+        }
 
         setContentView(R.layout.activity_main)
 

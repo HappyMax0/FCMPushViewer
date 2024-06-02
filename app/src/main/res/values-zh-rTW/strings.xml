@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">FCM推送查看器</string>
+    <string name="dialog_title_error">出錯</string>
+    <string name="dialog_btn_ok">確認</string>
+    <string name="dialog_msg_missing_gms">請確保您的設備已安裝谷歌服務</string>
     <string name="toolbar_search">搜索</string>
     <string name="toolbar_help">幫助</string>
     <string name="toolbar_openGcmDiagnostics">打開FCM診斷</string>
