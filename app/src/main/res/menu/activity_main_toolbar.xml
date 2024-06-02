@@ -1,21 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
+
     <item
         android:id="@+id/search"
         android:title="@string/toolbar_search"
         app:showAsAction="always"
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
+
+    <item
+        android:id="@+id/GcmDiagnostics"
+        android:icon="@drawable/baseline_cloud_sync"
+        android:title="@string/toolbar_openGcmDiagnostics"
+        app:showAsAction="always" />
+
     <item
         android:id="@+id/help"
         android:icon="@drawable/baseline_help_outline"
         android:title="@string/toolbar_help"
         app:showAsAction="never" />
-    <item
-        android:id="@+id/GcmDiagnostics"
-        android:icon="@drawable/baseline_cloud_sync"
-        android:title="@string/toolbar_openGcmDiagnostics"
-        app:showAsAction="never" />
+
     <item
         android:id="@+id/HideSystemApp"
         android:checkable="true"

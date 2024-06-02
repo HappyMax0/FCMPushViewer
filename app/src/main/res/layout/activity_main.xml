@@ -15,8 +15,8 @@
             android:id="@+id/toolBar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
-            android:theme="@style/ThemeOverlay.Material3.Dark.ActionBar"
+            android:background="?attr/colorSurface"
+            android:theme="@style/ThemeOverlay.Material3.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight"
             app:layout_scrollFlags="scroll|enterAlways|snap" />
     </com.google.android.material.appbar.AppBarLayout>

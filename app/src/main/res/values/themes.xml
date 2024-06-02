@@ -10,7 +10,8 @@
         <item name="colorSecondaryVariant">?attr/colorSecondaryVariant</item>
         <item name="colorOnSecondary">?attr/colorOnSecondary</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimary</item>
-        <!-- Customize your theme here. -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item> <!-- 控制图标颜色：true 图标黑色，false 图标白色 -->
+
     </style>
 </resources>
