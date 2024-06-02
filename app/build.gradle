@@ -11,7 +11,7 @@ android {
         applicationId "com.happymax.fcmpushviewer"
         minSdk 26
         targetSdk 33
-        versionCode 2
+        versionCode 3
         versionName "2.1.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
