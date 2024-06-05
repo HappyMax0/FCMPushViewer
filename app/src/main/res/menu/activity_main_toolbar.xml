@@ -12,7 +12,7 @@
         android:id="@+id/GcmDiagnostics"
         android:icon="@drawable/baseline_cloud_sync"
         android:title="@string/toolbar_openGcmDiagnostics"
-        app:showAsAction="always" />
+        app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/help"

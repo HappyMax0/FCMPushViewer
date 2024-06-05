@@ -42,7 +42,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val apiAvailability: GoogleApiAvailability = GoogleApiAvailability.getInstance()
+        /*val apiAvailability: GoogleApiAvailability = GoogleApiAvailability.getInstance()
         val resultCode: Int = apiAvailability.isGooglePlayServicesAvailable(this)
         if(resultCode != ConnectionResult.SUCCESS){
             val builder = AlertDialog.Builder(this@MainActivity)
@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
             val dialog = builder.create()
             dialog.show()
-        }
+        }*/
 
         setContentView(R.layout.activity_main)
 
