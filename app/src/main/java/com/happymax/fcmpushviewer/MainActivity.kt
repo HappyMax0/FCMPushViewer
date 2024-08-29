@@ -24,6 +24,7 @@ import kotlin.concurrent.thread
 
 
 class MainActivity : AppCompatActivity() {
+    private lateinit var mainFragment: MainFragment
     private lateinit var mSearchView: SearchView
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefresh: SwipeRefreshLayout
@@ -42,26 +43,13 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        /*val apiAvailability: GoogleApiAvailability = GoogleApiAvailability.getInstance()
-        val resultCode: Int = apiAvailability.isGooglePlayServicesAvailable(this)
-        if(resultCode != ConnectionResult.SUCCESS){
-            val builder = AlertDialog.Builder(this@MainActivity)
-            builder.setTitle(R.string.dialog_title_error)
-                .setMessage(R.string.dialog_msg_missing_gms)
-                .setPositiveButton(R.string.dialog_btn_ok) { dialog, which ->
-                    // OK button clicked
-                    this.finish()
-                }
-
-            val dialog = builder.create()
-            dialog.show()
-        }*/
-
         setContentView(R.layout.activity_main)
 
         sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE)
         val toolbar: Toolbar = findViewById(R.id.toolBar)
         setSupportActionBar(toolbar)
+
+        mainFragment = supportFragmentManager.findFragmentById(R.id.main_fragment) as MainFragment
 
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
 

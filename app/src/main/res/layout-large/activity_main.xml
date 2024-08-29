@@ -20,11 +20,24 @@
             app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight"
             app:layout_scrollFlags="scroll|enterAlways|snap" />
     </com.google.android.material.appbar.AppBarLayout>
-    
-    <fragment
-        android:id="@+id/main_fragment"
-        android:name="com.happymax.fcmpushviewer.MainFragment"
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        android:orientation="horizontal"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+        <fragment
+            android:id="@+id/main_fragment"
+            android:name="com.happymax.fcmpushviewer.MainFragment"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <fragment
+            android:id="@+id/detail_fragment"
+            android:name="com.happymax.fcmpushviewer.DetailFragment"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </LinearLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

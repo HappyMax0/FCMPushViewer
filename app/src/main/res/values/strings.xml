@@ -16,4 +16,6 @@
         You can click the application listed in the list to enter the system\'s application information page, click the \"Battery\" option, and make sure the status is \"Optimization\". \n
         When the status is \"Restricted\", FCM will not be able to pull up the application pop-up notification. This is FCM Determined by the principle, when a notification comes, FCM will broadcast and pull up the pop-up notification of the corresponding application. \n
         If the application is developed according to the specifications, when no message comes, the application will enter the cache in the background and will not consume a lot of power. </string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
 </resources>
