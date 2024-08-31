@@ -1,6 +1,7 @@
 package com.happymax.fcmpushviewer
 
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.provider.Settings
 import android.view.LayoutInflater
@@ -8,7 +9,10 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.appcompat.widget.ThemeUtils.getThemeAttrColor
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.color.MaterialColors.getColor
 
 class AppInfoListAdapter(val list: List<AppInfo>) :
     RecyclerView.Adapter<AppInfoListAdapter.ViewHolder>() {
