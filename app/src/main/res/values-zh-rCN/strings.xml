@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">FCM Viewer</string>
+    <string name="app_name">FCM 查看器</string>
     <string name="dialog_title_error">错误</string>
     <string name="dialog_btn_ok">确认</string>
     <string name="dialog_msg_missing_gms">请确保您的设备已安装谷歌服务</string>
