@@ -72,12 +72,10 @@ class MainActivity : AppCompatActivity() {
             mSearchView = MenuItemCompat.getActionView(item) as SearchView
             mSearchView.isIconified = true
             mSearchView.isSubmitButtonEnabled = false
-            mSearchView.setOnSearchClickListener(object : View.OnClickListener{
-                override fun onClick(view: View?) {
-                    supportActionBar?.setDisplayHomeAsUpEnabled(true)//添加默认的返回图标
-                    supportActionBar?.setHomeButtonEnabled(true)//设置返回键可用
-                }
-            })
+            mSearchView.setOnSearchClickListener {
+                supportActionBar?.setDisplayHomeAsUpEnabled(true)//添加默认的返回图标
+                supportActionBar?.setHomeButtonEnabled(true)//设置返回键可用
+            }
 
             mSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
                 override fun onQueryTextSubmit(query: String?): Boolean {
