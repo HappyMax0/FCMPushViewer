@@ -1,20 +1,24 @@
 package com.happymax.fcmpushviewer
 
-import android.app.AlertDialog
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Bundle
+import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
+import androidx.core.content.ContextCompat
 import androidx.core.view.MenuItemCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -58,11 +62,20 @@ class MainActivity : AppCompatActivity() {
 
         hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
 
+        val colorAccent = getThemeColor(this, androidx.appcompat.R.attr.colorAccent)
+
         swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
-        swipeRefresh.setColorSchemeResources(R.color.purple_500)
+        swipeRefresh.setColorSchemeColors(colorAccent)
         swipeRefresh.setOnRefreshListener {
             getAppList(hideSystemApp)
         }
+    }
+
+    fun getThemeColor(context: Context, attribute: Int): Int {
+        val typedValue = TypedValue()
+        val theme = context.theme
+        theme.resolveAttribute(attribute, typedValue, true)
+        return typedValue.data
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
