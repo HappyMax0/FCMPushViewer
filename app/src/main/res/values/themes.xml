@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools" xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Base application theme. -->
-    <style name="Theme.FCMPushViewer" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.FCMPushViewer" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Primary brand color. -->
         <item name="colorPrimary">?attr/colorPrimary</item>
         <item name="colorPrimaryVariant">?attr/colorPrimaryVariant</item>
@@ -10,8 +10,8 @@
         <item name="colorSecondaryVariant">?attr/colorSecondaryVariant</item>
         <item name="colorOnSecondary">?attr/colorOnSecondary</item>
         <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorSurface</item>
-        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item> <!-- 控制图标颜色：true 图标黑色，false 图标白色 -->
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item> <!-- 控制图标颜色：true 图标黑色，false 图标白色 -->
 
     </style>
 </resources>

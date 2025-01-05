@@ -10,15 +10,16 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolBar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorSurface"
-            android:theme="@style/ThemeOverlay.Material3.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.DayNight"
-            app:layout_scrollFlags="scroll|enterAlways|snap" />
+            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
+            app:layout_scrollFlags="scroll|enterAlways|snap"
+            android:titleTextColor="@color/white"/>
     </com.google.android.material.appbar.AppBarLayout>
     
     <fragment
