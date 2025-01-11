@@ -7,25 +7,8 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.AppBarLayout
-        android:id="@+id/appBarLayout"
+    <androidx.compose.ui.platform.ComposeView
+        android:id="@+id/compose_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
-        <androidx.appcompat.widget.Toolbar
-            android:id="@+id/toolBar"
-            android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
-            android:titleTextColor="@color/white"/>
-    </com.google.android.material.appbar.AppBarLayout>
-    
-    <fragment
-        android:id="@+id/main_fragment"
-        android:name="com.happymax.fcmpushviewer.MainFragment"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        android:layout_height="match_parent"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

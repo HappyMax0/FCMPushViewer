@@ -24,6 +24,6 @@
         android:id="@+id/HideSystemApp"
         android:checkable="true"
         android:icon="@drawable/baseline_android"
-        android:title="@string/toolbar_hideSystemApp"
+        android:title="@string/toolbar_showSystemApp"
         app:showAsAction="never" />
 </menu>

@@ -4,9 +4,11 @@
     <string name="dialog_btn_ok">OK</string>
     <string name="dialog_msg_missing_gms">Please make sure your device has Google Play services installed</string>
     <string name="toolbar_search">Search</string>
+    <string name="toolbar_exitSearch">Close</string>
+    <string name="toolbar_more">More</string>
     <string name="toolbar_help">Help</string>
     <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
-    <string name="toolbar_hideSystemApp">Hide System App</string>
+    <string name="toolbar_showSystemApp">Show System App</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM Diagnostics</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM Unavailable</string>
