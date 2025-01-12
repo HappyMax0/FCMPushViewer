@@ -8,6 +8,7 @@
     <string name="toolbar_exitSearch">关闭</string>
     <string name="toolbar_more">更多</string>
     <string name="toolbar_help">帮助</string>
+    <string name="toolbar_back">返回</string>
     <string name="toolbar_openGcmDiagnostics">打开FCM诊断</string>
     <string name="toolbar_showSystemApp">显示系统应用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>

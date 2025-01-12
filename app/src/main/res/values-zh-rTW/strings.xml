@@ -8,6 +8,7 @@
     <string name="toolbar_exitSearch">退出</string>
     <string name="toolbar_more">更多</string>
     <string name="toolbar_help">幫助</string>
+    <string name="toolbar_back">返回</string>
     <string name="toolbar_openGcmDiagnostics">打開FCM診斷</string>
     <string name="toolbar_showSystemApp">顯示系統應用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>

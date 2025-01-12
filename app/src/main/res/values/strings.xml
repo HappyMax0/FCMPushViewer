@@ -7,6 +7,7 @@
     <string name="toolbar_exitSearch">Close</string>
     <string name="toolbar_more">More</string>
     <string name="toolbar_help">Help</string>
+    <string name="toolbar_back">Back</string>
     <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
     <string name="toolbar_showSystemApp">Show System App</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>

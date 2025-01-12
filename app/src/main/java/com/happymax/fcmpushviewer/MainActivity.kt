@@ -75,7 +75,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 
 
@@ -277,6 +281,7 @@ class MainActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppList(){
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
@@ -289,6 +294,7 @@ fun AppList(){
         .filter { it.appName.contains(searchText) }
 
     Scaffold(
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             TopAppBar(
                 title = {
@@ -327,15 +333,6 @@ fun AppList(){
                             }
                         }
                     }
-                    //gcm button
-                    IconButton(onClick = {
-                        val intent = Intent()
-                        val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-                        intent.setComponent(comp)
-                        context.startActivity(intent)
-                    }) {
-                        Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
-                    }
                     //more button
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
@@ -369,7 +366,19 @@ fun AppList(){
                             context.startActivity(intent)
                         })
                     }
-                })
+                },
+                scrollBehavior = scrollBehavior)
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                val intent = Intent()
+                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
+                intent.setComponent(comp)
+                context.startActivity(intent) })
+            {
+                Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
+
+            }
         }
     ) { innerPadding ->
         LazyColumn(modifier = Modifier.padding(innerPadding)){
