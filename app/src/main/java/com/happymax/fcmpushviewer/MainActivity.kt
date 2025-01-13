@@ -81,6 +81,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.navigation.compose.rememberNavController
 
 
 class MainActivity : AppCompatActivity() {
@@ -281,6 +282,7 @@ class MainActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppList(){
+    val navController = rememberNavController()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
