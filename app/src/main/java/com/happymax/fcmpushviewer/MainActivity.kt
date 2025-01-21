@@ -81,25 +81,11 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
+import androidx.core.content.ContextCompat
 import androidx.navigation.compose.rememberNavController
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var mainFragment: MainFragment
-    private lateinit var mSearchView: SearchView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var sharedPreferences: SharedPreferences
-    private val appList = ArrayList<AppInfo>()
-    private var hideSystemApp:Boolean = false
-        get() = field
-        set(value){
-            getAppList(value)
-            val editor = sharedPreferences.edit()
-            editor.putBoolean("HideSystemApp", value)
-            editor.apply()
-            field = value
-        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -111,163 +97,6 @@ class MainActivity : AppCompatActivity() {
                 AppList()
             }
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.activity_main_toolbar, menu)
-        val item = menu?.findItem(R.id.search)
-        if(item != null){
-            mSearchView = MenuItemCompat.getActionView(item) as SearchView
-            mSearchView.isIconified = true
-            mSearchView.isSubmitButtonEnabled = false
-            mSearchView.setOnSearchClickListener {
-                supportActionBar?.setDisplayHomeAsUpEnabled(true)//添加默认的返回图标
-                supportActionBar?.setHomeButtonEnabled(true)//设置返回键可用
-            }
-
-            mSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    //提交文本时调用
-                    if(!query.isNullOrEmpty())
-                    {
-                        val querySequence = query
-                        val filteredList = appList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
-                        recyclerView.adapter = AppInfoListAdapter(filteredList)
-                        return true
-                    }
-                    else
-                        return false
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    //文本搜索框发生变化时调用
-                    if(!newText.isNullOrEmpty()){
-                        val querySequence = newText
-                        val filteredList = appList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
-                        recyclerView.adapter = AppInfoListAdapter(filteredList)
-                        return true
-                    }
-                    else{
-                        recyclerView.adapter = AppInfoListAdapter(appList)
-                        return true
-                    }
-                    return false
-                }
-            })
-            mSearchView.setOnCloseListener(object : SearchView.OnCloseListener{
-                override fun onClose(): Boolean {
-                    recyclerView.adapter = AppInfoListAdapter(appList)
-                    mSearchView.clearFocus()
-                    mSearchView.onActionViewCollapsed()
-                    supportActionBar?.setDisplayHomeAsUpEnabled(false)//添加默认的返回图标
-                    supportActionBar?.setHomeButtonEnabled(false)//设置返回键可用
-                    return true
-                }
-            })
-
-        }
-        val checkItem = menu?.findItem(R.id.HideSystemApp)
-        if(checkItem != null){
-            checkItem.isChecked = hideSystemApp
-            checkItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
-                override fun onMenuItemClick(item: MenuItem): Boolean {
-                    if(!item.isChecked){
-                        //Hide System App
-                        hideSystemApp = true
-
-                        item.isChecked = true
-                    }
-                    else{
-                        hideSystemApp = false
-
-                        item.isChecked = false
-                    }
-                    return true;
-                }
-            })
-        }
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId){
-            android.R.id.home -> {
-                PressBackBtn()
-            }
-            R.id.help -> {
-                val intent = Intent(this, HelpActivity::class.java)
-                startActivity(intent)
-            }
-            R.id.GcmDiagnostics -> {
-                val intent = Intent()
-                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-                intent.setComponent(comp)
-                startActivity(intent)
-            }
-            R.id.HideSystemApp -> {
-
-            }
-        }
-        return true
-    }
-
-    private fun PressBackBtn(){
-        if(!mSearchView.isIconified){
-            mSearchView.setQuery("", false)
-            mSearchView.clearFocus()
-            mSearchView.onActionViewCollapsed()
-            supportActionBar?.setDisplayHomeAsUpEnabled(false)//添加默认的返回图标
-            supportActionBar?.setHomeButtonEnabled(false)//设置返回键可用
-        }else{
-            moveTaskToBack(true)
-        }
-    }
-
-    private fun getAppList(hideSystemApp:Boolean = false){
-        appList.clear()
-
-        thread {
-            val packageManager = packageManager
-            for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-                if (packageInfo.receivers != null) {
-                    for (receiverInfo in packageInfo.receivers) {
-                        if (receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                            val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
-                            val packageName = packageInfo.packageName
-                            var icon:Drawable? = packageInfo.applicationInfo.loadIcon(packageManager);
-                            val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                            if(!(hideSystemApp && isSystemApp)){
-                                val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
-                                appList.add(appInfo)
-                            }
-
-                            break
-                        }
-                    }
-                }
-            }
-            runOnUiThread {
-                val isLargeLayout = (resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE
-                if(!isLargeLayout){
-                    recyclerView.layoutManager = LinearLayoutManager(this)
-                }
-                else{
-                    val spanCount = calculateSpanCount()
-                    recyclerView.layoutManager = GridLayoutManager(this, spanCount)
-                }
-
-                recyclerView.adapter = AppInfoListAdapter(appList)
-                swipeRefresh.isRefreshing = false
-            }
-        }
-    }
-
-    private fun replaceFragment(layoutID:Int, fragment: Fragment){
-        val fragmentManager = supportFragmentManager
-        val transaction = fragmentManager.beginTransaction()
-        transaction.replace(layoutID, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
     }
 
     private fun calculateSpanCount(): Int {
@@ -282,7 +111,7 @@ class MainActivity : AppCompatActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppList(){
-    val navController = rememberNavController()
+    //val navController = rememberNavController()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
@@ -365,7 +194,7 @@ fun AppList(){
                             }
                         }, onClick = {
                             val intent = Intent(context, HelpActivity::class.java)
-                            context.startActivity(intent)
+                            ContextCompat.startActivity(context, intent, null)
                         })
                     }
                 },
@@ -407,7 +236,7 @@ fun ShowAppInfo(appInfo: AppInfo, modifier: Modifier = Modifier) {
                         Column {
                             Row {
                                 if(appInfo.icon != null)
-                                    Image(bitmap = drawableToBitmap(appInfo.icon).asImageBitmap(), contentDescription = appInfo.appName,
+                                    Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
                                         modifier = Modifier
                                             .width(60.dp)
                                             .height(60.dp)
@@ -465,7 +294,7 @@ private fun getAppList(context: Context): ArrayList<AppInfo>{
                     val packageName = packageInfo.packageName
                     var icon:Drawable? = packageInfo.applicationInfo.loadIcon(packageManager);
                     val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                    val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
+                    val appInfo = AppInfo(appName, packageName, if (icon!=null) drawableToBitmap(icon) else null, isSystemApp)
                     appList.add(appInfo)
 
                     break
