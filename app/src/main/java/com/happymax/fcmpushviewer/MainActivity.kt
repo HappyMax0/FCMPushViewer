@@ -8,6 +8,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.os.Build
 import android.os.Bundle
@@ -15,18 +16,25 @@ import android.util.TypedValue
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.view.WindowManager
+import androidx.activity.enableEdgeToEdge
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SearchView
 import androidx.appcompat.widget.Toolbar
-import androidx.core.content.ContextCompat
+import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.graphics.Insets
 import androidx.core.view.MenuItemCompat
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.gms.common.ConnectionResult
-import com.google.android.gms.common.GoogleApiAvailability
+import com.google.android.material.appbar.AppBarLayout
 import kotlin.concurrent.thread
 
 
@@ -47,14 +55,20 @@ class MainActivity : AppCompatActivity() {
             field = value
         }
 
+    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+
         super.onCreate(savedInstanceState)
 
         setContentView(R.layout.activity_main)
 
-        sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE)
+        setupWindow()
+
         val toolbar: Toolbar = findViewById(R.id.toolBar)
         setSupportActionBar(toolbar)
+
+        sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE)
 
         mainFragment = supportFragmentManager.findFragmentById(R.id.main_fragment) as MainFragment
 
@@ -71,7 +85,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun getThemeColor(context: Context, attribute: Int): Int {
+    private fun setupWindow() {
+        val coordinatorLayout: CoordinatorLayout = findViewById(R.id.coordinatorLayout)
+
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout) { v, insets ->
+            val systemWindowInsets = insets.getInsets(
+                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
+            )
+            coordinatorLayout.updatePadding(
+                top = systemWindowInsets.top,
+                left = systemWindowInsets.left,
+                right = systemWindowInsets.right,
+                bottom = systemWindowInsets.bottom)
+
+            val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+            WindowInsetsCompat.Builder(insets)
+                .setInsets(
+                    WindowInsetsCompat.Type.systemBars(),
+                    Insets.of(0, 0, 0, systemBarInsets.bottom)
+                )
+                .setInsets(
+                    WindowInsetsCompat.Type.ime(),
+                    Insets.of(0, 0, 0, imeInsets.bottom)
+                )
+                .build()
+        }
+    }
+
+    private fun getThemeColor(context: Context, attribute: Int): Int {
         val typedValue = TypedValue()
         val theme = context.theme
         theme.resolveAttribute(attribute, typedValue, true)
@@ -194,19 +237,23 @@ class MainActivity : AppCompatActivity() {
         thread {
             val packageManager = packageManager
             for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-                if (packageInfo.receivers != null) {
-                    for (receiverInfo in packageInfo.receivers) {
+                if (packageInfo?.receivers != null) {
+                    for (receiverInfo in packageInfo.receivers!!) {
                         if (receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                            val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
-                            val packageName = packageInfo.packageName
-                            var icon:Drawable? = packageInfo.applicationInfo.loadIcon(packageManager);
-                            val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                            if(!(hideSystemApp && isSystemApp)){
-                                val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
-                                appList.add(appInfo)
+                            if(packageInfo.applicationInfo != null)
+                            {
+                                val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
+                                val packageName = packageInfo.packageName
+                                var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
+                                val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                                if(!(hideSystemApp && isSystemApp)){
+                                    val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
+                                    appList.add(appInfo)
+                                }
+
+                                break
                             }
 
-                            break
                         }
                     }
                 }
