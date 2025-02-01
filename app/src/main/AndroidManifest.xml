@@ -17,8 +17,10 @@
         android:theme="@style/Theme.FCMPushViewer"
         tools:targetApi="31">
         <activity
-            android:name=".HelpActivity"
-            android:exported="false" />
+            android:name=".FCMActivity"
+            android:exported="false"
+            android:label="@string/title_activity_fcmactivity"
+            android:theme="@style/Theme.FCMPushViewer" />
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -27,7 +29,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <meta-data android:name="android.app.shortcuts"
+
+            <meta-data
+                android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
     </application>

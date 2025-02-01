@@ -3,33 +3,23 @@ package com.happymax.fcmpushviewer
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import android.util.TypedValue
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
 import androidx.activity.ComponentActivity
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.Toolbar
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,7 +36,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
@@ -60,41 +49,53 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.core.view.MenuItemCompat
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import kotlin.concurrent.thread
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
-import androidx.core.content.ContextCompat
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.happymax.fcmpushviewer.ui.theme.FCMPushViewerTheme
+import kotlinx.serialization.Serializable
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.ui.graphics.Color
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.runtime.LaunchedEffect
+import androidx.navigation.NavHostController
+import androidx.navigation.toRoute
 
+@Serializable
+object AppList
 
-class MainActivity : AppCompatActivity() {
+@Serializable
+object Help
+
+@Serializable
+object FCMDiagnostics
+
+@Serializable
+data class AppSettings(val packageName:String)
+
+class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
-        setContentView(R.layout.activity_main)
-        var composeView = findViewById<ComposeView>(R.id.compose_view)
-        composeView.setContent {
-            MaterialTheme{
-                AppList()
+        setContent {
+            FCMPushViewerTheme{
+                NavBase()
             }
         }
     }
@@ -106,12 +107,51 @@ class MainActivity : AppCompatActivity() {
 
         return (screenWidthDp / columnWidthDp).toInt().coerceAtLeast(1)
     }
+
 }
+
+@Composable
+fun NavBase(){
+    val navController = rememberNavController()
+    val context = LocalContext.current
+    NavHost(navController = navController, startDestination = AppList) {
+        composable<AppList> {
+            AppListScreen(onItemClick = { packageName -> navController.navigate(route = AppSettings(packageName)) }, onFloatButtonClick = {
+                //navController.navigate(FCMDiagnostics)
+                val intent = Intent(context, FCMActivity::class.java)
+                context.startActivity(intent)}, onHelpItemClick = { navController.navigate(route = Help) }) }
+        composable<Help> { HelpPage(onBackBtnPressed = { navController.popBackStack() }) }
+        composable<FCMDiagnostics> {
+            val context = LocalContext.current
+            LaunchedEffect(Unit){
+                val intent = Intent(context, FCMActivity::class.java)
+//                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
+//                intent.setComponent(comp)
+//                intent.setClassName(
+//                    "com.google.android.gms",
+//                    "com.google.android.gms.gcm.GcmDiagnostics"
+//                )
+                //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                context.startActivity(intent)
+                navController.popBackStack()
+            }
+        }
+        composable<AppSettings> { backStackEntry ->
+            val appSettings: AppSettings = backStackEntry.toRoute()
+            val context = LocalContext.current
+            val intent = Intent()
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+            intent.setData(Uri.parse("package:" + appSettings.packageName))
+            context.startActivity(intent)
+            navController.popBackStack()
+        }
+    }
+}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppList(){
-    //val navController = rememberNavController()
+fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}){
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
@@ -143,7 +183,13 @@ fun AppList(){
                         }
                     }else
                     {
-                        Row {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(), // Row 占据整个宽度
+                            verticalAlignment = Alignment.CenterVertically // 垂直方向居中对齐
+                        ) {
+                            IconButton(onClick = { isSearchActive = false }) {
+                                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(id = R.string.toolbar_back))
+                            }
                             TextField(
                                 value = searchText,
                                 onValueChange = { query ->
@@ -152,16 +198,20 @@ fun AppList(){
                                 placeholder = { Text(stringResource(id = R.string.toolbar_search)) },
                                 singleLine = true,
                                 modifier = Modifier
-                                    .width(200.dp)
-                                ,
+                                    .weight(1f),
+                                colors = TextFieldDefaults.colors(
+                                    focusedContainerColor = Color.Transparent,
+                                    unfocusedContainerColor = Color.Transparent
+                                ),
+                                trailingIcon = {
+                                    IconButton(onClick = {
+                                        isSearchActive = false
+                                        searchText = ""
+                                    }) {
+                                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch))
+                                    }
+                                }
                             )
-                            IconButton(onClick = {
-                                isSearchActive = false
-                                searchText = ""
-                            }, modifier = Modifier
-                                .align(Alignment.CenterVertically)) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch))
-                            }
                         }
                     }
                     //more button
@@ -193,8 +243,7 @@ fun AppList(){
                                 Text(text = stringResource(id = R.string.toolbar_help))
                             }
                         }, onClick = {
-                            val intent = Intent(context, HelpActivity::class.java)
-                            ContextCompat.startActivity(context, intent, null)
+                            onHelpItemClick()
                         })
                     }
                 },
@@ -202,10 +251,14 @@ fun AppList(){
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                val intent = Intent()
-                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-                intent.setComponent(comp)
-                context.startActivity(intent) })
+//                val intent = Intent()
+//                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
+//                intent.setComponent(comp)
+//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+//                context.startActivity(intent)
+                //navController.navigate(route = FCMDiagnostics)
+                onFloatButtonClick()
+            })
             {
                 Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
 
@@ -215,14 +268,20 @@ fun AppList(){
         LazyColumn(modifier = Modifier.padding(innerPadding)){
             items(appList) { item ->
                 if(!item.systemApp || (item.systemApp && showSystemApp))
-                    ShowAppInfo(item)
+                    ShowAppInfo(item, onClick = { item ->
+//                        val intent = Intent()
+//                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+//                        intent.setData(Uri.parse("package:" + item.packageName))
+//                        context.startActivity(intent)
+                        onItemClick(item.packageName)
+                    })
             }
         }
     }
 }
 
 @Composable
-fun ShowAppInfo(appInfo: AppInfo, modifier: Modifier = Modifier) {
+fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = modifier,
@@ -231,7 +290,7 @@ fun ShowAppInfo(appInfo: AppInfo, modifier: Modifier = Modifier) {
                 Row(modifier = modifier
                     .fillMaxWidth()
                     .padding(10.dp)
-                    , horizontalArrangement = Arrangement.SpaceBetween){
+                    .clickable { onClick(appInfo) }, horizontalArrangement = Arrangement.SpaceBetween){
                     Box(modifier=modifier.weight(1f)){
                         Column {
                             Row {
@@ -288,12 +347,12 @@ private fun getAppList(context: Context): ArrayList<AppInfo>{
     val packageManager = context.packageManager
     for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
         if (packageInfo.receivers != null) {
-            for (receiverInfo in packageInfo.receivers) {
-                if (receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                    val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
+            for (receiverInfo in packageInfo.receivers!!) {
+                if (packageInfo.applicationInfo != null && receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
+                    val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
                     val packageName = packageInfo.packageName
-                    var icon:Drawable? = packageInfo.applicationInfo.loadIcon(packageManager);
-                    val isSystemApp = (packageInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                    var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
+                    val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
                     val appInfo = AppInfo(appName, packageName, if (icon!=null) drawableToBitmap(icon) else null, isSystemApp)
                     appList.add(appInfo)
 
@@ -305,10 +364,48 @@ private fun getAppList(context: Context): ArrayList<AppInfo>{
     return  appList
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HelpPage(onBackBtnPressed:()->Unit = {}){
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(id = R.string.toolbar_help))
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    titleContentColor = MaterialTheme.colorScheme.primary,
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { onBackBtnPressed() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.toolbar_back))
+                    }
+                },
+                scrollBehavior = scrollBehavior)
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding)){
+            Text(stringResource(R.string.help_text), modifier = Modifier.padding(20.dp))
+        }
+    }
+}
+
+@Preview
+@Composable
+fun HelpPagePreview() {
+    MaterialTheme{
+        HelpPage()
+    }
+}
+
 @Preview
 @Composable
 fun AppListPreview() {
     MaterialTheme{
-        AppList()
+        AppListScreen()
     }
 }
