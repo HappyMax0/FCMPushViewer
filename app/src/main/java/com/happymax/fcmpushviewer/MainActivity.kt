@@ -35,6 +35,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import com.google.android.material.appbar.AppBarLayout
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.concurrent.thread
 
 
@@ -83,6 +84,11 @@ class MainActivity : AppCompatActivity() {
         swipeRefresh.setOnRefreshListener {
             getAppList(hideSystemApp)
         }
+
+        val floatingActionBtn:FloatingActionButton = findViewById(R.id.floatingActionBtn)
+        floatingActionBtn.setOnClickListener { view ->
+            navigateToFCM()
+           }
     }
 
     private fun setupWindow() {
@@ -206,17 +212,18 @@ class MainActivity : AppCompatActivity() {
                 val intent = Intent(this, HelpActivity::class.java)
                 startActivity(intent)
             }
-            R.id.GcmDiagnostics -> {
-                val intent = Intent()
-                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-                intent.setComponent(comp)
-                startActivity(intent)
-            }
             R.id.HideSystemApp -> {
 
             }
         }
         return true
+    }
+
+    private fun navigateToFCM(){
+        val intent = Intent()
+        val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
+        intent.setComponent(comp)
+        startActivity(intent)
     }
 
     private fun PressBackBtn(){
