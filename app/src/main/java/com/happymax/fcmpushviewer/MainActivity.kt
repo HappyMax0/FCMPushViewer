@@ -45,13 +45,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var swipeRefresh: SwipeRefreshLayout
     private lateinit var sharedPreferences: SharedPreferences
-    private val appList = ArrayList<AppInfo>()
-    private var hideSystemApp:Boolean = false
+    private var fullAppList = ArrayList<AppInfo>()
+    private var showAppList = ArrayList<AppInfo>()
+
+    private var showSystemApp:Boolean = false
         get() = field
         set(value){
-            getAppList(value)
+            if(value)
+                showAppList = fullAppList
+            else
+                showAppList = fullAppList.filter { it.systemApp == false } as ArrayList<AppInfo>
+
+            recyclerView.adapter = AppInfoListAdapter(showAppList)
+
             val editor = sharedPreferences.edit()
-            editor.putBoolean("HideSystemApp", value)
+            editor.putBoolean("HideSystemApp", !value)
             editor.apply()
             field = value
         }
@@ -75,20 +83,52 @@ class MainActivity : AppCompatActivity() {
 
         recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
 
-        hideSystemApp = sharedPreferences.getBoolean("HideSystemApp", false)
+        setRecyclerView()
+
+        showSystemApp = !sharedPreferences.getBoolean("HideSystemApp", true)
 
         val colorAccent = getThemeColor(this, androidx.appcompat.R.attr.colorAccent)
 
         swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
         swipeRefresh.setColorSchemeColors(colorAccent)
         swipeRefresh.setOnRefreshListener {
-            getAppList(hideSystemApp)
+            refreshAppList()
         }
 
         val floatingActionBtn:FloatingActionButton = findViewById(R.id.floatingActionBtn)
         floatingActionBtn.setOnClickListener { view ->
             navigateToFCM()
            }
+
+        refreshAppList()
+    }
+
+    private fun refreshAppList(){
+        thread {
+            fullAppList = getAppList()
+
+            runOnUiThread {
+                if(showSystemApp)
+                    showAppList = fullAppList
+                else
+                    showAppList = fullAppList.filter { it.systemApp == false } as ArrayList<AppInfo>
+
+                recyclerView.adapter = AppInfoListAdapter(showAppList)
+
+                swipeRefresh.isRefreshing = false
+            }
+        }
+    }
+
+    private fun setRecyclerView(){
+        val isLargeLayout = (resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE
+        if(!isLargeLayout){
+            recyclerView.layoutManager = LinearLayoutManager(this)
+        }
+        else{
+            val spanCount = calculateSpanCount()
+            recyclerView.layoutManager = GridLayoutManager(this, spanCount)
+        }
     }
 
     private fun setupWindow() {
@@ -145,7 +185,7 @@ class MainActivity : AppCompatActivity() {
                     if(!query.isNullOrEmpty())
                     {
                         val querySequence = query
-                        val filteredList = appList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
+                        val filteredList = showAppList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
                         recyclerView.adapter = AppInfoListAdapter(filteredList)
                         return true
                     }
@@ -157,12 +197,12 @@ class MainActivity : AppCompatActivity() {
                     //文本搜索框发生变化时调用
                     if(!newText.isNullOrEmpty()){
                         val querySequence = newText
-                        val filteredList = appList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
+                        val filteredList = showAppList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
                         recyclerView.adapter = AppInfoListAdapter(filteredList)
                         return true
                     }
                     else{
-                        recyclerView.adapter = AppInfoListAdapter(appList)
+                        recyclerView.adapter = AppInfoListAdapter(showAppList)
                         return true
                     }
                     return false
@@ -170,7 +210,7 @@ class MainActivity : AppCompatActivity() {
             })
             mSearchView.setOnCloseListener(object : SearchView.OnCloseListener{
                 override fun onClose(): Boolean {
-                    recyclerView.adapter = AppInfoListAdapter(appList)
+                    recyclerView.adapter = AppInfoListAdapter(showAppList)
                     mSearchView.clearFocus()
                     mSearchView.onActionViewCollapsed()
                     supportActionBar?.setDisplayHomeAsUpEnabled(false)//添加默认的返回图标
@@ -182,17 +222,17 @@ class MainActivity : AppCompatActivity() {
         }
         val checkItem = menu?.findItem(R.id.HideSystemApp)
         if(checkItem != null){
-            checkItem.isChecked = hideSystemApp
+            checkItem.isChecked = showSystemApp
             checkItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
                 override fun onMenuItemClick(item: MenuItem): Boolean {
                     if(!item.isChecked){
                         //Hide System App
-                        hideSystemApp = true
+                        showSystemApp = true
 
                         item.isChecked = true
                     }
                     else{
-                        hideSystemApp = false
+                        showSystemApp = false
 
                         item.isChecked = false
                     }
@@ -238,47 +278,30 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun getAppList(hideSystemApp:Boolean = false){
-        appList.clear()
-
-        thread {
-            val packageManager = packageManager
-            for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-                var supportFCM = false
-                if (packageInfo?.receivers != null) {
-                    for (receiverInfo in packageInfo.receivers!!) {
-                        supportFCM = receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver"
-                        if(supportFCM)
-                            break
-                    }
-                }
-
-                if(packageInfo.applicationInfo != null)
-                {
-                    val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
-                    val packageName = packageInfo.packageName
-                    var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
-                    val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                    if(!(hideSystemApp && isSystemApp)){
-                        val appInfo = AppInfo(appName, packageName, icon, isSystemApp, supportFCM)
-                        appList.add(appInfo)
-                    }
+    private fun getAppList():ArrayList<AppInfo>{
+        val appList = ArrayList<AppInfo>()
+        val packageManager = packageManager
+        for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
+            var supportFCM = false
+            if (packageInfo?.receivers != null) {
+                for (receiverInfo in packageInfo.receivers!!) {
+                    supportFCM = receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver"
+                    if(supportFCM)
+                        break
                 }
             }
-            runOnUiThread {
-                val isLargeLayout = (resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE
-                if(!isLargeLayout){
-                    recyclerView.layoutManager = LinearLayoutManager(this)
-                }
-                else{
-                    val spanCount = calculateSpanCount()
-                    recyclerView.layoutManager = GridLayoutManager(this, spanCount)
-                }
 
-                recyclerView.adapter = AppInfoListAdapter(appList)
-                swipeRefresh.isRefreshing = false
+            if(packageInfo.applicationInfo != null)
+            {
+                val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
+                val packageName = packageInfo.packageName
+                var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
+                val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                val appInfo = AppInfo(appName, packageName, icon, isSystemApp, supportFCM)
+                appList.add(appInfo)
             }
         }
+        return appList
     }
 
     private fun replaceFragment(layoutID:Int, fragment: Fragment){

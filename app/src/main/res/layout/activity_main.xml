@@ -11,13 +11,12 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        >
+        android:layout_height="wrap_content">
         <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:titleTextColor="@color/white" />
+            app:layout_scrollFlags="scroll|enterAlways|snap"/>
     </com.google.android.material.appbar.AppBarLayout>
 
     <fragment

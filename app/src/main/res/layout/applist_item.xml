@@ -48,7 +48,7 @@
 
         <ImageView
             android:id="@+id/fcmIcon"
-            android:src="@drawable/baseline_android"
+            android:src="@drawable/outline_wb_cloudy_24"
             android:layout_width="25dp"
             android:layout_height="25dp"
             app:layout_constraintEnd_toEndOf="parent"
