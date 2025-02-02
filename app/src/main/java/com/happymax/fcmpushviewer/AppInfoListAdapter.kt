@@ -21,7 +21,7 @@ class AppInfoListAdapter(val list: List<AppInfo>) :
         val appIconImageView: ImageView = view.findViewById(R.id.AppIconImageView)
         val appNameTextView: TextView = view.findViewById(R.id.AppNameTextView)
         val packageNameTextView: TextView = view.findViewById(R.id.PackageNameTextView)
-
+        val fcmIcon:ImageView = view.findViewById(R.id.fcmIcon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -50,7 +50,10 @@ class AppInfoListAdapter(val list: List<AppInfo>) :
         holder.appNameTextView.text = appInfo.appName
         holder.packageNameTextView.text = appInfo.packageName
         holder.appIconImageView.setImageDrawable(appInfo.icon)
-
+        if(appInfo.supportFCM)
+            holder.fcmIcon.visibility = View.VISIBLE
+        else
+            holder.fcmIcon.visibility = View.INVISIBLE
     }
 
     override fun getItemCount(): Int {

@@ -244,24 +244,24 @@ class MainActivity : AppCompatActivity() {
         thread {
             val packageManager = packageManager
             for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
+                var supportFCM = false
                 if (packageInfo?.receivers != null) {
                     for (receiverInfo in packageInfo.receivers!!) {
-                        if (receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                            if(packageInfo.applicationInfo != null)
-                            {
-                                val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
-                                val packageName = packageInfo.packageName
-                                var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
-                                val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                                if(!(hideSystemApp && isSystemApp)){
-                                    val appInfo = AppInfo(appName, packageName, icon, isSystemApp)
-                                    appList.add(appInfo)
-                                }
+                        supportFCM = receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver"
+                        if(supportFCM)
+                            break
+                    }
+                }
 
-                                break
-                            }
-
-                        }
+                if(packageInfo.applicationInfo != null)
+                {
+                    val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
+                    val packageName = packageInfo.packageName
+                    var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
+                    val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+                    if(!(hideSystemApp && isSystemApp)){
+                        val appInfo = AppInfo(appName, packageName, icon, isSystemApp, supportFCM)
+                        appList.add(appInfo)
                     }
                 }
             }
