@@ -9,12 +9,6 @@
         app:actionViewClass="androidx.appcompat.widget.SearchView" />
 
     <item
-        android:id="@+id/GcmDiagnostics"
-        android:icon="@drawable/baseline_cloud_sync"
-        android:title="@string/toolbar_openGcmDiagnostics"
-        app:showAsAction="ifRoom" />
-
-    <item
         android:id="@+id/help"
         android:icon="@drawable/baseline_help_outline"
         android:title="@string/toolbar_help"

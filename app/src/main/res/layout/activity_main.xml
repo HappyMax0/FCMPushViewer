@@ -3,6 +3,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/coordinatorLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
@@ -10,22 +11,27 @@
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:theme="@style/Theme.AppCompat.DayNight.DarkActionBar">
-        <androidx.appcompat.widget.Toolbar
+        android:layout_height="wrap_content">
+        <com.google.android.material.appbar.MaterialToolbar
             android:id="@+id/toolBar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-            app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-            app:layout_scrollFlags="scroll|enterAlways|snap"
-            android:titleTextColor="@color/white"/>
+            android:layout_height="wrap_content"
+            app:layout_scrollFlags="scroll|enterAlways|snap"/>
     </com.google.android.material.appbar.AppBarLayout>
-    
+
     <fragment
         android:id="@+id/main_fragment"
         android:name="com.happymax.fcmpushviewer.MainFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floatingActionBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:src="@drawable/baseline_cloud_sync"
+        android:contentDescription="@string/toolbar_openGcmDiagnostics"
+        android:layout_margin="16dp"/>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
