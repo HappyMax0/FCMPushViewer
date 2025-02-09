@@ -51,15 +51,29 @@ class MainActivity : AppCompatActivity() {
     private var showSystemApp:Boolean = false
         get() = field
         set(value){
-            if(value)
-                showAppList = fullAppList
-            else
-                showAppList = fullAppList.filter { it.systemApp == false } as ArrayList<AppInfo>
+            showAppList = fullAppList.filter { !it.systemApp || it.systemApp == value }
+                .filter { it.supportFCM || it.supportFCM != showNotSupportedApp }
+                    as ArrayList<AppInfo>
 
             recyclerView.adapter = AppInfoListAdapter(showAppList)
 
             val editor = sharedPreferences.edit()
             editor.putBoolean("HideSystemApp", !value)
+            editor.apply()
+            field = value
+        }
+
+    private var showNotSupportedApp:Boolean = false
+        get() = field
+        set(value){
+            showAppList = fullAppList.filter { !it.systemApp || it.systemApp == showSystemApp }
+                .filter { it.supportFCM || it.supportFCM != value }
+                    as ArrayList<AppInfo>
+
+            recyclerView.adapter = AppInfoListAdapter(showAppList)
+
+            val editor = sharedPreferences.edit()
+            editor.putBoolean("ShowNotSupportedApp", value)
             editor.apply()
             field = value
         }
@@ -87,6 +101,8 @@ class MainActivity : AppCompatActivity() {
 
         showSystemApp = !sharedPreferences.getBoolean("HideSystemApp", true)
 
+        showNotSupportedApp = !sharedPreferences.getBoolean("ShowNotSupportedApp", false)
+
         val colorAccent = getThemeColor(this, androidx.appcompat.R.attr.colorAccent)
 
         swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
@@ -100,6 +116,7 @@ class MainActivity : AppCompatActivity() {
             navigateToFCM()
            }
 
+        swipeRefresh.isRefreshing = true
         refreshAppList()
     }
 
@@ -108,10 +125,9 @@ class MainActivity : AppCompatActivity() {
             fullAppList = getAppList()
 
             runOnUiThread {
-                if(showSystemApp)
-                    showAppList = fullAppList
-                else
-                    showAppList = fullAppList.filter { it.systemApp == false } as ArrayList<AppInfo>
+                showAppList = fullAppList.filter { !it.systemApp || it.systemApp == showSystemApp }
+                    .filter { it.supportFCM || it.supportFCM != showNotSupportedApp }
+                        as ArrayList<AppInfo>
 
                 recyclerView.adapter = AppInfoListAdapter(showAppList)
 
@@ -220,10 +236,11 @@ class MainActivity : AppCompatActivity() {
             })
 
         }
-        val checkItem = menu?.findItem(R.id.HideSystemApp)
-        if(checkItem != null){
-            checkItem.isChecked = showSystemApp
-            checkItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
+
+        val hideSystemAppCheckItem = menu?.findItem(R.id.HideSystemApp)
+        if(hideSystemAppCheckItem != null){
+            hideSystemAppCheckItem.isChecked = showSystemApp
+            hideSystemAppCheckItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
                 override fun onMenuItemClick(item: MenuItem): Boolean {
                     if(!item.isChecked){
                         //Hide System App
@@ -240,6 +257,28 @@ class MainActivity : AppCompatActivity() {
                 }
             })
         }
+
+        val showUnsupportAppCheckItem = menu?.findItem(R.id.ShowUnsupportedApp)
+        if(showUnsupportAppCheckItem != null){
+            showUnsupportAppCheckItem.isChecked = showNotSupportedApp
+            showUnsupportAppCheckItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
+                override fun onMenuItemClick(item: MenuItem): Boolean {
+                    if(!item.isChecked){
+                        //Hide System App
+                        showNotSupportedApp = true
+
+                        item.isChecked = true
+                    }
+                    else{
+                        showNotSupportedApp = false
+
+                        item.isChecked = false
+                    }
+                    return true;
+                }
+            })
+        }
+
         return true
     }
 
@@ -253,6 +292,9 @@ class MainActivity : AppCompatActivity() {
                 startActivity(intent)
             }
             R.id.HideSystemApp -> {
+
+            }
+            R.id.ShowUnsupportedApp -> {
 
             }
         }

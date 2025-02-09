@@ -8,10 +8,29 @@
     <string name="toolbar_help">幫助</string>
     <string name="toolbar_openGcmDiagnostics">打開FCM診斷</string>
     <string name="toolbar_hideSystemApp">列出系統軟體</string>
+    <string name="toolbar_showUnsupportApp">列出不支援應用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM診斷</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM不可用</string>
     <string name="help_text">此APP可以查看用戶安裝的應用及系統應用中，哪些應用支持谷歌FCM推送，並且可以調出FCM系統日誌界面，可以查看FCM連接狀態及應用推送記錄。\n
         當成功連上FCM伺服器後，還需要打開支持FCM的應用的自啟動許可權（中國大陸的定製系統除了微信等幾個白名單APP外，預設都會限制應用自啟動，其他地方的Android系統則預設不會限制應用後臺運行）。\n
         您可以點擊列表中列出的應用，進入系統的應用信息頁，點擊“電池”選項，確保狀態為“優化”，當狀態為“限制”時，FCM將無法拉起應用彈出通知，這是FCM原理決定的，當來通知時，FCM會廣播拉起對應應用彈出通知，如果應用按規範開發，當沒有消息來的時候，應用會在後臺進入緩存，並不會消耗很多電量。</string>
+    <string name="help_whatsfcm">什麼是FCM？</string>
+    <string name="help_whatsfcm_description">Firebase Cloud Messaging (FCM) 推播服務是Google提供的Android平台上的統一通知推播服務，有了它，Android可以像iOS一樣，不開啟應用，就能收到應用程式的訊息通知。全球Android應用程式（中國大陸除外）基本上都是使用FCM推播通知給用戶。如果你要接收國際應用的通知推播，你就必須要用到它，並且如果你是除了華為、小米、OPPO、Vivo、魅族之外的Android設備，你也可以用它接收少數中國應用的通知推送。</string>
+    <string name="help_user_guide">使用說明</string>
+    <string name="help_user_guide_1">1.雲朵符號：應用程式清單中顯示的雲朵符號表示該應用程式已接入 Firebase Cloud Messaging (FCM) 推播服務，但這並不表示應用程式一定會使用 FCM 推播訊息。應用程式是否透過 FCM 接收推播訊息，可能取決於使用者的帳號地區。例如，該應用程式偵測到使用者使用的是 +86 地區的帳號，則可能不會透過 FCM 進行推送。可在應用程式接收通知後，進入 FCM 日誌介面，點選 "Events"，搜尋對應應用程式包名，查看是否有相關記錄。</string>
+    <string name="help_user_guide_2">2.自啟動需求：FCM推送要求應用程式能夠自啟動。如果應用程式無法自啟動，FCM日誌介面（可透過應用主介面右下角的懸浮按鈕打開）會顯示類似「Failed broadcast to xxx.xxx.xxx (套用套件名稱)」的錯誤訊息。為了成功接收通知，請在系統設定中允許該應用程式自啟動（中國大陸客製化系統）或設定應用的電池使用選項為「最佳化」（例如類原生系統和三星等）。如果顯示類似於“Successful broadcast to xxx.xxx.xxx (應用程式包名)”，表示推送成功。</string>
+    <string name="help_user_guide_3">3.中國大陸客製化系統：某些中國大陸客製化系統可能在偵測到無法連接Google後，會中斷FCM推送連線。長期開啟代理確保連的上Google可能能解決此問題（如中國大陸版本系統的三星）。</string>
+    <string name="help_user_guide_4">4.中國大陸連接：在中國大陸，FCM可以直連。如果連線不暢，可能是您的代理軟體代理了Google FCM的連線。由於FCM需要保持長連接，因此代理連接時間過長可能會逾時，導致重複重連。建議在代理規則中選擇FCM直連。\n FCM的域名為\n
+        alt1-mtalk.google.com\n
+        alt2-mtalk.google.com\n
+        alt3-mtalk.google.com\n
+        alt4-mtalk.google.com\n
+        alt5-mtalk.google.com\n
+        alt6-mtalk.google.com\n
+        alt7-mtalk.google.com\n
+        alt8-mtalk.google.com\n
+        mtalk.google.com
+    </string>
+    <string name="help_copyright_statement_google">Google, Firebase Cloud Messaging, FCM, Android為Google公司的商標</string>
 </resources>

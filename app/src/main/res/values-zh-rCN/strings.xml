@@ -8,6 +8,7 @@
     <string name="toolbar_help">帮助</string>
     <string name="toolbar_openGcmDiagnostics">打开FCM诊断</string>
     <string name="toolbar_hideSystemApp">显示系统应用</string>
+    <string name="toolbar_showUnsupportApp">显示不支持应用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM诊断</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM不可用</string>
@@ -15,4 +16,22 @@
         当成功连上FCM服务器后，还需要打开支持FCM的应用的自启动权限 \n
         （中国大陆定制系统除了微信等几个白名单APP外，默认都会限制应用自启动，其它地方的Android系统则默认不会限制应用后台运行）。\n
         您可以点击列表中列出的应用，进入系统的应用信息页，点击“电池”选项，确保状态为“优化”，当状态为“限制”时，FCM将无法拉起应用弹出通知，这是FCM原理决定的，当来通知时，FCM会广播拉起对应应用弹出通知，如果应用按规范开发，当没有消息来的时候，应用会在后台进入缓存，并不会消耗很多电量。</string>
+    <string name="help_whatsfcm">什么是FCM？</string>
+    <string name="help_whatsfcm_description">Firebase Cloud Messaging (FCM) 推送服务是谷歌提供的Android平台上的统一通知推送服务，有了它，Android可以像iOS那样，不打开应用，就能收到应用的消息通知。全球Android应用（中国大陆除外）基本都是使用FCM推送通知给用户。如果你要接收国际应用的通知推送，你就必须要用到它，并且如果你是除了华为、小米、OPPO、Vivo、魅族之外的Android设备，你也可以用它接收少数中国应用的通知推送。</string>
+    <string name="help_user_guide">使用说明</string>
+    <string name="help_user_guide_1">1.云朵符号：应用列表中显示的云朵符号表示该应用已接入 Firebase Cloud Messaging (FCM) 推送服务，但这并不意味着应用一定会使用 FCM 推送消息。应用是否通过 FCM 接收推送消息，可能取决于用户的账号地区。例如，该应用检测到用户使用的是 +86 地区的账号，则可能不会通过 FCM 进行推送。可在应用接收到通知后，进入 FCM 日志界面，点击 "Events"，搜索对应应用包名，查看是否有相关记录。</string>
+    <string name="help_user_guide_2">2.自启动需求：FCM推送要求应用能够自启动。如果应用不能自启动，FCM日志界面（可通过应用主界面右下角的悬浮按钮打开）会显示类似于“Failed broadcast to xxx.xxx.xxx (应用包名)”的错误信息。为了成功接收通知，请在系统设置中允许该应用自启动（中国大陆定制系统）或者设置应用的电池使用选项为“优化”（比如类原生系统和三星等）。如果显示类似于“Successful broadcast to xxx.xxx.xxx (应用包名)”，表示推送成功。</string>
+    <string name="help_user_guide_3">3.中国大陆定制系统：某些中国大陆定制系统可能在检测到无法连接Google后，会断开FCM推送连接。长期开启代理确保连的上Google可能能解决此问题（如中国大陆版本系统的三星）。</string>
+    <string name="help_user_guide_4">4.中国大陆连接：在中国大陆，FCM可以直连。如果连接不畅，可能是您的代理软件代理了Google FCM的连接。由于FCM需要保持长连接，代理连接时间过长可能会超时，导致反复重连。建议在代理规则中选择FCM直连。\n FCM的域名为\n
+        alt1-mtalk.google.com\n
+        alt2-mtalk.google.com\n
+        alt3-mtalk.google.com\n
+        alt4-mtalk.google.com\n
+        alt5-mtalk.google.com\n
+        alt6-mtalk.google.com\n
+        alt7-mtalk.google.com\n
+        alt8-mtalk.google.com\n
+        mtalk.google.com
+    </string>
+    <string name="help_copyright_statement_google">Google, Firebase Cloud Messaging, FCM, Android为Google公司的商标</string>
 </resources>
