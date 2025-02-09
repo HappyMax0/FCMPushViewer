@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
 
         showSystemApp = !sharedPreferences.getBoolean("HideSystemApp", true)
 
-        showNotSupportedApp = !sharedPreferences.getBoolean("ShowNotSupportedApp", false)
+        showNotSupportedApp = sharedPreferences.getBoolean("ShowNotSupportedApp", false)
 
         val colorAccent = getThemeColor(this, androidx.appcompat.R.attr.colorAccent)
 
