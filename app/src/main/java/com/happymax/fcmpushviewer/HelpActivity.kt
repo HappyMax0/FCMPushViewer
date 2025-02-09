@@ -6,7 +6,6 @@ import android.view.MenuItem
 import android.widget.LinearLayout
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.widget.Toolbar
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
@@ -42,14 +41,14 @@ class HelpActivity : AppCompatActivity() {
     }
 
     private fun setupWindow() {
-        val constraintLayout: ConstraintLayout = findViewById(R.id.constraintLayout)
+        val coordinatorLayout: CoordinatorLayout = findViewById(R.id.coordinatorLayout)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        ViewCompat.setOnApplyWindowInsetsListener(constraintLayout) { v, insets ->
+        ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout) { v, insets ->
             val systemWindowInsets = insets.getInsets(
                 WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
             )
-            constraintLayout.updatePadding(
+            coordinatorLayout.updatePadding(
                 top = systemWindowInsets.top,
                 left = systemWindowInsets.left,
                 right = systemWindowInsets.right,

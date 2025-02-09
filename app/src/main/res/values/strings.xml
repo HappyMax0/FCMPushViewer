@@ -7,6 +7,7 @@
     <string name="toolbar_help">Help</string>
     <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
     <string name="toolbar_hideSystemApp">Show System App</string>
+    <string name="toolbar_showUnsupportApp">Show Unsupported App</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM Diagnostics</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM Unavailable</string>
@@ -16,4 +17,22 @@
         You can click the application listed in the list to enter the system\'s application information page, click the \"Battery\" option, and make sure the status is \"Optimization\". \n
         When the status is \"Restricted\", FCM will not be able to pull up the application pop-up notification. This is FCM Determined by the principle, when a notification comes, FCM will broadcast and pull up the pop-up notification of the corresponding application. \n
         If the application is developed according to the specifications, when no message comes, the application will enter the cache in the background and will not consume a lot of power. </string>
+    <string name="help_whatsfcm">What\'s FCM?</string>
+    <string name="help_whatsfcm_description">Firebase Cloud Messaging (FCM) push service is a unified notification push service on the Android platform provided by Google. With it, Android can receive message notifications from apps without opening the app, just like iOS. Global Android apps (except mainland China) basically use FCM to push notifications to users. If you want to receive push notifications from international apps, you must use it, and if you are using an Android device other than Huawei, Xiaomi, OPPO, Vivo, and Meizu, you can also use it to receive push notifications from a few Chinese apps.</string>
+    <string name="help_user_guide">User Guide</string>
+    <string name="help_user_guide_1">1. Cloud symbol: The cloud symbol displayed in the application list indicates that the application has been connected to the Firebase Cloud Messaging (FCM) push service, but this does not mean that the application will definitely use FCM to push messages. Whether the application receives push messages through FCM may depend on the user\'s account region. For example, if the application detects that the user is using an account in the +86 region, it may not push through FCM. After the application receives the notification, enter the FCM log interface, click "Events", search for the corresponding application package name, and check whether there is any related record.</string>
+    <string name="help_user_guide_2">2. Self-start requirement: FCM push requires the app to be able to start automatically. If the app cannot start automatically, the FCM log interface (You can open it through the floating button in the lower right corner of the main interface of the application) will display an error message similar to "Failed broadcast to xxx.xxx.xxx (app package name)". In order to successfully receive notifications, please allow the app to start automatically in the system settings (customized system for Chinese mainland) or set the battery usage option of the app to "optimize" (such as native system and Samsung, etc.). If it displays something like "Successful broadcast to xxx.xxx.xxx (app package name)", it means the push is successful.</string>
+    <string name="help_user_guide_3">3. Customized systems for Chinese mainland: Some customized systems for Chinese mainland may disconnect the FCM push connection after detecting that they cannot connect to Google. Turning on the proxy for a long time to ensure that you can connect to Google may solve this problem (such as Samsung in the Chinese mainland version of the system).</string>
+    <string name="help_user_guide_4">4. Mainland China connection: In mainland China, FCM can be directly connected. If the connection is not smooth, it may be that your proxy software is proxying the Google FCM connection. Since FCM needs to maintain a long connection, the proxy connection time may time out if it is too long, resulting in repeated reconnection. It is recommended to select FCM direct connection in the proxy rules.\n The domain name of FCM is\n
+        alt1-mtalk.google.com\n
+        alt2-mtalk.google.com\n
+        alt3-mtalk.google.com\n
+        alt4-mtalk.google.com\n
+        alt5-mtalk.google.com\n
+        alt6-mtalk.google.com\n
+        alt7-mtalk.google.com\n
+        alt8-mtalk.google.com\n
+        mtalk.google.com
+    </string>
+    <string name="help_copyright_statement_google">Google, Firebase Cloud Messaging, FCM, Android are trademarks of Google Inc.</string>
 </resources>

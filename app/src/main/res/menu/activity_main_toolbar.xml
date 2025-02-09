@@ -20,4 +20,11 @@
         android:icon="@drawable/baseline_android"
         android:title="@string/toolbar_hideSystemApp"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/ShowUnsupportedApp"
+        android:checkable="true"
+        android:icon="@drawable/baseline_wb_cloudy_24"
+        android:title="@string/toolbar_showUnsupportApp"
+        app:showAsAction="never" />
 </menu>
