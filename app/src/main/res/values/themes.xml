@@ -14,4 +14,11 @@
         <item name="android:windowLightStatusBar" tools:targetApi="m">false</item> <!-- 控制图标颜色：true 图标黑色，false 图标白色 -->
 
     </style>
+
+        <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
+            <!-- 可按需自定义配色 -->
+            <item name="colorPrimary">@color/purple_500</item>
+            <item name="colorSecondary">@color/teal_200</item>
+            <!-- 如果你用 Toolbar 而不是系统 ActionBar，就保持 NoActionBar -->
+        </style>
 </resources>
