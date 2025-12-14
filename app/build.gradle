@@ -48,6 +48,7 @@ android {
 }
 
 dependencies {
+    implementation 'androidx.compose.material:material-android:1.6.8' // 包含 PullRefreshIndicator
     implementation("androidx.activity:activity-ktx:1.9.3")
     implementation("androidx.transition:transition:1.5.0")
     implementation("androidx.cardview:cardview:1.0.0")

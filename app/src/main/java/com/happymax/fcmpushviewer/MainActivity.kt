@@ -71,21 +71,22 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.navigation.NavHostController
 import androidx.navigation.toRoute
+import kotlinx.coroutines.launch
 
 @Serializable
 object AppList
 
 @Serializable
 object Help
-
-@Serializable
-object FCMDiagnostics
-
-@Serializable
-data class AppSettings(val packageName:String)
 
 class MainActivity : ComponentActivity() {
 
@@ -116,50 +117,48 @@ fun NavBase(){
     val context = LocalContext.current
     NavHost(navController = navController, startDestination = AppList) {
         composable<AppList> {
-            AppListScreen(onItemClick = { packageName -> navController.navigate(route = AppSettings(packageName)) }, onFloatButtonClick = {
+            AppListScreen(onItemClick = { packageName -> val intent = Intent()
+                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.setData(Uri.parse("package:" + packageName))
+                        context.startActivity(intent)
+            }, onFloatButtonClick = {
                 //navController.navigate(FCMDiagnostics)
                 val intent = Intent(context, FCMActivity::class.java)
-                context.startActivity(intent)}, onHelpItemClick = { navController.navigate(route = Help) }) }
+                context.startActivity(intent)},
+                onHelpItemClick = { navController.navigate(route = Help) }) }
         composable<Help> { HelpPage(onBackBtnPressed = { navController.popBackStack() }) }
-        composable<FCMDiagnostics> {
-            val context = LocalContext.current
-            LaunchedEffect(Unit){
-                val intent = Intent(context, FCMActivity::class.java)
-//                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-//                intent.setComponent(comp)
-//                intent.setClassName(
-//                    "com.google.android.gms",
-//                    "com.google.android.gms.gcm.GcmDiagnostics"
-//                )
-                //intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                context.startActivity(intent)
-                navController.popBackStack()
-            }
-        }
-        composable<AppSettings> { backStackEntry ->
-            val appSettings: AppSettings = backStackEntry.toRoute()
-            val context = LocalContext.current
-            val intent = Intent()
-            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-            intent.setData(Uri.parse("package:" + appSettings.packageName))
-            context.startActivity(intent)
-            navController.popBackStack()
-        }
     }
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}){
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
+    val coroutineScope = rememberCoroutineScope()
+    var isRefreshing by remember { mutableStateOf(false) }
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var searchText by rememberSaveable { mutableStateOf("") }
-    val fullAppList:ArrayList<AppInfo> by rememberSaveable { mutableStateOf(getAppList(context)) }
+    var fullAppList: List<AppInfo> = getAppList(context)
+
+    // 2. 下拉刷新逻辑
+    fun refreshData() = coroutineScope.launch {
+        isRefreshing = true
+        // 更新数据（例如：在现有列表前插入新数据，或完全替换）
+        fullAppList = getAppList(context)
+        isRefreshing = false
+    }
+
+    // 3. 创建 PullRefreshState
+    // 记住状态，用于管理下拉手势和刷新指示器的位置
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = isRefreshing, // 当前是否正在刷新
+        onRefresh = ::refreshData // 触发下拉时调用的函数
+    )
 
     val appList = fullAppList
         .filter { it.appName.contains(searchText) }
@@ -251,31 +250,37 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-//                val intent = Intent()
-//                val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-//                intent.setComponent(comp)
-//                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-//                context.startActivity(intent)
-                //navController.navigate(route = FCMDiagnostics)
                 onFloatButtonClick()
             })
             {
                 Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
-
             }
         }
     ) { innerPadding ->
-        LazyColumn(modifier = Modifier.padding(innerPadding)){
-            items(appList) { item ->
-                if(!item.systemApp || (item.systemApp && showSystemApp))
-                    ShowAppInfo(item, onClick = { item ->
-//                        val intent = Intent()
-//                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-//                        intent.setData(Uri.parse("package:" + item.packageName))
-//                        context.startActivity(intent)
-                        onItemClick(item.packageName)
-                    })
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
+                // 将 pullRefresh 修改器应用于 Box
+                .pullRefresh(pullRefreshState)
+        ) {
+            LazyColumn() {
+                items(appList) { item ->
+                    if (!item.systemApp || (item.systemApp && showSystemApp))
+                        ShowAppInfo(item, onClick = { item ->
+                            onItemClick(item.packageName)
+                        })
+                }
             }
+            // PullRefreshIndicator - 刷新指示器
+            // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                // 可选：更改颜色等属性
+                // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
+            )
         }
     }
 }
