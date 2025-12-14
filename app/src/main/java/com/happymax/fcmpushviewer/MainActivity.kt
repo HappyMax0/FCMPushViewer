@@ -72,6 +72,9 @@ import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -122,7 +125,6 @@ fun NavBase(){
                         intent.setData(Uri.parse("package:" + packageName))
                         context.startActivity(intent)
             }, onFloatButtonClick = {
-                //navController.navigate(FCMDiagnostics)
                 val intent = Intent(context, FCMActivity::class.java)
                 context.startActivity(intent)},
                 onHelpItemClick = { navController.navigate(route = Help) }) }
@@ -264,7 +266,8 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                 // 将 pullRefresh 修改器应用于 Box
                 .pullRefresh(pullRefreshState)
         ) {
-            LazyColumn() {
+            LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                columns = GridCells.Adaptive(minSize = 360.dp)) {
                 items(appList) { item ->
                     if (!item.systemApp || (item.systemApp && showSystemApp))
                         ShowAppInfo(item, onClick = { item ->
@@ -320,14 +323,8 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
                             }
                         }
                     }
-
-                    Row{
-
-                    }
                 }
-
             }
-
         })
 }
 
