@@ -71,6 +71,7 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -163,7 +164,8 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     )
 
     val appList = fullAppList
-        .filter { it.appName.contains(searchText) }
+        .filter { !it.systemApp || (it.systemApp && showSystemApp) }
+        .filter { it.appName.contains(searchText.trim()) }
 
     Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -269,10 +271,9 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
             LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
                 columns = GridCells.Adaptive(minSize = 360.dp)) {
                 items(appList) { item ->
-                    if (!item.systemApp || (item.systemApp && showSystemApp))
-                        ShowAppInfo(item, onClick = { item ->
-                            onItemClick(item.packageName)
-                        })
+                    ShowAppInfo(item, onClick = { item ->
+                        onItemClick(item.packageName)
+                    })
                 }
             }
             // PullRefreshIndicator - 刷新指示器
@@ -300,27 +301,30 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
                     .padding(10.dp)
                     .clickable { onClick(appInfo) }, horizontalArrangement = Arrangement.SpaceBetween){
                     Box(modifier=modifier.weight(1f)){
-                        Column {
-                            Row {
-                                if(appInfo.icon != null)
-                                    Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
-                                        modifier = Modifier
-                                            .width(60.dp)
-                                            .height(60.dp)
-                                            .padding(10.dp))
-                                Column(modifier = Modifier
-                                    .align(Alignment.CenterVertically)) {
-                                    Text(
-                                        text = appInfo.appName,
-                                        modifier = modifier
-                                    )
-                                    Text(
-                                        text = appInfo.packageName,
-                                        modifier = modifier,
-                                        fontSize = 12.sp
-                                    )
-                                }
+                        Row {
+                            if(appInfo.icon != null)
+                                Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
+                                    modifier = Modifier
+                                        .width(60.dp)
+                                        .height(60.dp)
+                                        .padding(10.dp))
+                            Column(modifier = Modifier
+                                .align(Alignment.CenterVertically)) {
+                                Text(
+                                    text = appInfo.appName,
+                                    modifier = modifier
+                                )
+                                Text(
+                                    text = appInfo.packageName,
+                                    modifier = modifier,
+                                    fontSize = 12.sp
+                                )
                             }
+                            // 这个 Spacer 会占据所有剩余空间
+                            Spacer(modifier = Modifier.weight(1f))
+                            if(appInfo.supportFCM)
+                                Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                    modifier=modifier.padding(4.dp))
                         }
                     }
                 }
@@ -348,20 +352,24 @@ private fun getAppList(context: Context): ArrayList<AppInfo>{
     val appList:ArrayList<AppInfo> = ArrayList<AppInfo>()
     val packageManager = context.packageManager
     for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-        if (packageInfo.receivers != null) {
-            for (receiverInfo in packageInfo.receivers!!) {
-                if (packageInfo.applicationInfo != null && receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                    val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
-                    val packageName = packageInfo.packageName
-                    var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
-                    val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                    val appInfo = AppInfo(appName, packageName, if (icon!=null) drawableToBitmap(icon) else null, isSystemApp)
-                    appList.add(appInfo)
 
+        if (packageInfo.receivers != null) {
+            var supportFCM = false
+            for (receiverInfo in packageInfo.receivers) {
+                if ( packageInfo.applicationInfo != null && receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
+                    supportFCM = true
                     break
                 }
             }
+
+            val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
+            val packageName = packageInfo.packageName
+            var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
+            val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
+            val appInfo = AppInfo(appName, packageName, if (icon!=null) drawableToBitmap(icon) else null, isSystemApp, supportFCM)
+            appList.add(appInfo)
         }
+
     }
     return  appList
 }
