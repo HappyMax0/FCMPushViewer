@@ -223,6 +223,7 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     val coroutineScope = rememberCoroutineScope()
     var isRefreshing by remember { mutableStateOf(false) }
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
+    var showNotSupportedApp by rememberSaveable { mutableStateOf(sharedPreferences.getBoolean("ShowNotSupportedApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var fullAppList: List<AppInfo> = getAppList(context)
@@ -243,7 +244,7 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     )
 
     val appList = fullAppList
-        .filter { !it.systemApp || (it.systemApp && showSystemApp) }
+        .filter { (!it.systemApp || (it.systemApp && showSystemApp)) && (it.supportFCM || it.supportFCM != showNotSupportedApp) }
 
     if(isSearchActive){
         SimpleSearchBar({ isSearchActive = false }, appList)
@@ -288,6 +289,25 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                                 showSystemApp = !showSystemApp
                                 val editor = sharedPreferences.edit()
                                 editor.putBoolean("HideSystemApp", !showSystemApp)
+                                editor.apply()
+                            })
+                            DropdownMenuItem(text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = stringResource(id = R.string.toolbar_showUnsupportApp))
+
+                                    Checkbox(
+                                        checked = showNotSupportedApp,
+                                        onCheckedChange = {
+                                            showNotSupportedApp = it
+                                            val editor = sharedPreferences.edit()
+                                            editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
+                                            editor.apply()
+                                        })
+                                }
+                            }, onClick = {
+                                showNotSupportedApp = !showNotSupportedApp
+                                val editor = sharedPreferences.edit()
+                                editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
                                 editor.apply()
                             })
                             DropdownMenuItem(text = {

@@ -11,6 +11,7 @@
     <string name="toolbar_back">返回</string>
     <string name="toolbar_openGcmDiagnostics">打开FCM诊断</string>
     <string name="toolbar_showSystemApp">显示系统应用</string>
+    <string name="toolbar_showUnsupportApp">显示不支持应用</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM诊断</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM不可用</string>

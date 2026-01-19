@@ -10,6 +10,7 @@
     <string name="toolbar_back">Back</string>
     <string name="toolbar_openGcmDiagnostics">FCM Diagnostics</string>
     <string name="toolbar_showSystemApp">Show System App</string>
+    <string name="toolbar_showUnsupportApp">Show Unsupported App</string>
     <string name="shortcut_shortlabel_GcmDiagnostics">FCM</string>
     <string name="shortcut_longlabel_GcmDiagnostics">FCM Diagnostics</string>
     <string name="shortcut_disable_GcmDiagnostics">FCM Unavailable</string>
