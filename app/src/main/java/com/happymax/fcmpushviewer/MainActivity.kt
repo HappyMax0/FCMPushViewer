@@ -468,10 +468,55 @@ fun HelpPage(onBackBtnPressed:()->Unit = {}){
                 scrollBehavior = scrollBehavior)
         }
     ) { innerPadding ->
-        Column(modifier = Modifier.padding(innerPadding)){
-            Text(stringResource(R.string.help_text), modifier = Modifier.padding(20.dp))
+        Column(modifier = Modifier.padding(innerPadding).
+        verticalScroll(rememberScrollState()) // 使内容可滚动
+        ){
+            //Text(stringResource(R.string.help_text), modifier = Modifier.padding(20.dp))
+            // 使用 Spacer 手动空行
+            Spacer(modifier = Modifier.height(20.dp))
+
+            HelpTitle(R.string.help_whatsfcm)
+            HelpDescription(R.string.help_whatsfcm_description)
+
+            HelpTitle(R.string.help_user_guide)
+            HelpDescription(R.string.help_user_guide_1)
+            HelpDescription(R.string.help_user_guide_2)
+            HelpDescription(R.string.help_user_guide_3)
+            HelpDescription(R.string.help_user_guide_4)
+
+            Spacer(modifier = Modifier.weight(1f)) // 对应 layout_alignParentBottom 的效果
+
+            // 底部版权声明
+            Text(
+                text = stringResource(R.string.help_copyright_statement_google),
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier
+                    .padding(vertical = 20.dp, horizontal = 25.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
         }
     }
+}
+
+// 封装一个通用的标题样式
+@Composable
+fun HelpTitle(textRes: Int) {
+    Text(
+        text = stringResource(textRes),
+        fontSize = 20.sp,
+        modifier = Modifier.padding(vertical = 5.dp, horizontal = 25.dp)
+    )
+}
+
+// 封装一个通用的描述正文样式
+@Composable
+fun HelpDescription(textRes: Int) {
+    Text(
+        text = stringResource(textRes),
+        fontSize = 16.sp,
+        modifier = Modifier.padding(vertical = 20.dp, horizontal = 25.dp)
+    )
 }
 
 @Preview
