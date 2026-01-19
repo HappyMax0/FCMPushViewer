@@ -74,15 +74,19 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
@@ -350,46 +354,57 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
 @Composable
 fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier = Modifier) {
 
-    Surface(
-        modifier = modifier,
-        content =  {
-            Row(modifier = modifier
-                .fillMaxWidth()
-                .padding(10.dp)
-                .clickable { onClick(appInfo) }, horizontalArrangement = Arrangement.SpaceBetween){
-                Box(modifier=modifier.weight(1f)){
-                    Row {
-                        if(appInfo.icon != null)
-                            Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
-                                modifier = Modifier
-                                    .width(60.dp)
-                                    .height(60.dp)
-                                    .padding(10.dp))
-                        Column(modifier = Modifier
-                            .align(Alignment.CenterVertically)) {
-                            Row{
-                                Text(
-                                    text = appInfo.appName,
-                                    modifier = modifier
-                                )
-                                // 这个 Spacer 会占据所有剩余空间
-                                Spacer(modifier = Modifier.weight(1f))
-                                if(appInfo.supportFCM)
-                                    Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
-                                        modifier=Modifier.padding(4.dp, 4.dp, 10.dp, 4.dp))
-                            }
-
+    // 使用 Card 或 Surface 来自动处理圆角和深色模式背景
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(6.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .clickable { onClick(appInfo) }, // 左右外边距
+        shape = RoundedCornerShape(24.dp), // 设置较大的圆角
+        colors = CardDefaults.cardColors(
+            // 关键：容器颜色会自动随系统深/浅色模式切换
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // 如果不需要阴影可以设为0
+    ){
+        Row(modifier = modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            , horizontalArrangement = Arrangement.SpaceBetween){
+            Box(modifier=modifier.weight(1f)){
+                Row {
+                    if(appInfo.icon != null)
+                        Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(60.dp)
+                                .padding(10.dp))
+                    Column(modifier = Modifier
+                        .align(Alignment.CenterVertically)) {
+                        Row{
                             Text(
-                                text = appInfo.packageName,
-                                modifier = modifier,
-                                fontSize = 12.sp
+                                text = appInfo.appName,
+                                modifier = modifier
                             )
+                            // 这个 Spacer 会占据所有剩余空间
+                            Spacer(modifier = Modifier.weight(1f))
+                            if(appInfo.supportFCM)
+                                Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                    modifier=Modifier.padding(4.dp, 4.dp, 10.dp, 4.dp))
                         }
 
+                        Text(
+                            text = appInfo.packageName,
+                            modifier = modifier,
+                            fontSize = 12.sp
+                        )
                     }
+
                 }
             }
-        })
+        }
+    }
 }
 
 fun drawableToBitmap(drawable: Drawable): Bitmap {
