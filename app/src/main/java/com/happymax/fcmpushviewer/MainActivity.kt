@@ -1,6 +1,5 @@
 package com.happymax.fcmpushviewer
 
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -37,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -54,7 +52,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenuItem
@@ -67,7 +64,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.happymax.fcmpushviewer.ui.theme.FCMPushViewerTheme
 import kotlinx.serialization.Serializable
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
@@ -78,27 +74,19 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
-import androidx.compose.ui.text.toLowerCase
-import androidx.navigation.NavHostController
-import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
-import java.util.Locale
 import java.util.Locale.getDefault
 
 @Serializable
@@ -365,37 +353,39 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
     Surface(
         modifier = modifier,
         content =  {
-            Column(modifier=modifier.fillMaxWidth()) {
-                Row(modifier = modifier
-                    .fillMaxWidth()
-                    .padding(10.dp)
-                    .clickable { onClick(appInfo) }, horizontalArrangement = Arrangement.SpaceBetween){
-                    Box(modifier=modifier.weight(1f)){
-                        Row {
-                            if(appInfo.icon != null)
-                                Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
-                                    modifier = Modifier
-                                        .width(60.dp)
-                                        .height(60.dp)
-                                        .padding(10.dp))
-                            Column(modifier = Modifier
-                                .align(Alignment.CenterVertically)) {
+            Row(modifier = modifier
+                .fillMaxWidth()
+                .padding(10.dp)
+                .clickable { onClick(appInfo) }, horizontalArrangement = Arrangement.SpaceBetween){
+                Box(modifier=modifier.weight(1f)){
+                    Row {
+                        if(appInfo.icon != null)
+                            Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
+                                modifier = Modifier
+                                    .width(60.dp)
+                                    .height(60.dp)
+                                    .padding(10.dp))
+                        Column(modifier = Modifier
+                            .align(Alignment.CenterVertically)) {
+                            Row{
                                 Text(
                                     text = appInfo.appName,
                                     modifier = modifier
                                 )
-                                Text(
-                                    text = appInfo.packageName,
-                                    modifier = modifier,
-                                    fontSize = 12.sp
-                                )
+                                // 这个 Spacer 会占据所有剩余空间
+                                Spacer(modifier = Modifier.weight(1f))
+                                if(appInfo.supportFCM)
+                                    Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                        modifier=Modifier.padding(4.dp, 4.dp, 10.dp, 4.dp))
                             }
-                            // 这个 Spacer 会占据所有剩余空间
-                            Spacer(modifier = Modifier.weight(1f))
-                            if(appInfo.supportFCM)
-                                Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
-                                    modifier=Modifier.padding(2.dp, 6.dp))
+
+                            Text(
+                                text = appInfo.packageName,
+                                modifier = modifier,
+                                fontSize = 12.sp
+                            )
                         }
+
                     }
                 }
             }

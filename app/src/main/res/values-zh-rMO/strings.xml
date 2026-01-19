@@ -21,12 +21,12 @@
         列表中包含雲朵圖示的應用代表其支援FCM推送
     </string>
     <string name="help_whatsfcm">什麼是FCM？</string>
-    <string name="help_whatsfcm_description">Firebase Cloud Messaging (FCM) 推播服務是Google提供的Android平台上的統一通知推播服務，有了它，Android可以像iOS一樣，不開啟應用，就能收到應用程式的訊息通知。全球Android應用程式（中國大陸除外）基本上都是使用FCM推播通知給用戶。如果你要接收國際應用的通知推播，你就必須要用到它，並且如果你是除了華為、小米、OPPO、Vivo、魅族之外的Android設備，你也可以用它接收少數中國應用的通知推送。</string>
+    <string name="help_whatsfcm_description">Firebase Cloud Messaging (FCM) 推播服務是Google提供的Android平台上的統一通知推播服務，有了它，Android可以像iOS一樣，不開啟應用，就能收到應用程式的訊息通知。全球Android應用程式（中國大陸除外）基本上都是使用FCM推播通知給用戶。如果你要接收國際應用的通知推播，你就必須要用到它，並且如果你是除了中國大陸版本華為、小米、OPPO、Vivo、魅族之外的Android設備，你也可以用它接收少數中國應用的通知推送。</string>
     <string name="help_user_guide">使用說明</string>
-    <string name="help_user_guide_1">1.雲朵符號：應用程式清單中顯示的雲朵符號表示該應用程式已接入 Firebase Cloud Messaging (FCM) 推播服務，但這並不表示應用程式一定會使用 FCM 推播訊息。應用程式是否透過 FCM 接收推播訊息，可能取決於使用者的帳號地區。例如，該應用程式偵測到使用者使用的是 +86 地區的帳號，則可能不會透過 FCM 進行推送。可在應用程式接收通知後，進入 FCM 日誌介面，點選 "Events"，搜尋對應應用程式包名，查看是否有相關記錄。</string>
-    <string name="help_user_guide_2">2.自啟動需求：FCM推送要求應用程式能夠自啟動。如果應用程式無法自啟動，FCM日誌介面（可透過應用主介面右下角的懸浮按鈕打開）會顯示類似「Failed broadcast to xxx.xxx.xxx (套用套件名稱)」的錯誤訊息。為了成功接收通知，請在系統設定中允許該應用程式自啟動（中國大陸客製化系統）或設定應用的電池使用選項為「最佳化」（例如類原生系統和三星等）。如果顯示類似於“Successful broadcast to xxx.xxx.xxx (應用程式包名)”，表示推送成功。</string>
-    <string name="help_user_guide_3">3.中國大陸客製化系統：某些中國大陸客製化系統可能在偵測到無法連接Google後，會中斷FCM推送連線。長期開啟代理確保連的上Google可能能解決此問題（如中國大陸版本系統的三星）。</string>
-    <string name="help_user_guide_4">4.中國大陸連接：在中國大陸，FCM可以直連。如果連線不暢，可能是您的代理軟體代理了Google FCM的連線。由於FCM需要保持長連接，因此代理連接時間過長可能會逾時，導致重複重連。建議在代理規則中選擇FCM直連。\n FCM的域名為\n
+    <string name="help_user_guide_1">1.雲朵符號：應用程式清單中顯示的雲朵符號表示該應用程式已接入 Firebase Cloud Messaging (FCM) 推播服務，但這並不表示應用程式一定會使用 FCM 推播訊息。應用程式是否透過 FCM 接收推播訊息，可能取決於使用者的帳號地區。例如，該應用程式偵測到使用者使用的是 +86 地區的帳號，則可能不會透過 FCM 進行推送。可在應用程式接收通知後，進入 FCM 日誌介面，點選“Events”，搜尋對應應用程式包名，查看是否有相關記錄。</string>
+    <string name="help_user_guide_2">2.自啟動需求：FCM推送要求應用程式能夠自啟動。如果應用程式無法自啟動，FCM日誌介面（可透過應用主介面右下角的懸浮按鈕打開）會顯示類似“Failed broadcast to xxx.xxx.xxx (應用程式包名)”的錯誤訊息。為了成功接收通知，請在系統設定中允許該應用程式自啟動（中國大陸客製化系統）或設定應用的電池使用選項為「最佳化」（例如類原生系統和三星One UI等）。如果顯示類似於“Successful broadcast to xxx.xxx.xxx (應用程式包名)”，表示推播成功。</string>
+    <string name="help_user_guide_3">3.中國大陸客製化系統：某些中國大陸客製化系統可能在偵測到無法連接Google後，會中斷FCM推送連線。長期開啟代理確保能夠連上Google可能能解決此問題（如中國大陸版本系統的三星One UI）。</string>
+    <string name="help_user_guide_4">4.中國大陸連接：在中國大陸，FCM在大多數地區可以直連。如果連線不暢，可能是您的代理軟體代理了Google FCM的連線并且代理服務器不支援長連接。由於FCM需要保持長連接，因此代理連接時間過長可能會逾時，導致重複重連。碰到這種情況可以嘗試在代理規則中選擇FCM走直連或者更換代理供應商。\n FCM的域名為\n
         alt1-mtalk.google.com\n
         alt2-mtalk.google.com\n
         alt3-mtalk.google.com\n
