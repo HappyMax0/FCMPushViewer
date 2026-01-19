@@ -71,20 +71,35 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
+import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
+import androidx.compose.ui.text.toLowerCase
 import androidx.navigation.NavHostController
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
+import java.util.Locale
+import java.util.Locale.getDefault
 
 @Serializable
 object AppList
@@ -133,6 +148,71 @@ fun NavBase(){
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleSearchBar(
+    onExit: ()->Unit,
+    source: List<AppInfo>,
+    modifier: Modifier = Modifier
+) {
+    // Controls expansion state of the search bar
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    // Manage query state
+    var query by rememberSaveable { mutableStateOf("") }
+
+    // Filter items based on query
+    val resultList by remember {
+        derivedStateOf {
+            source.filter {
+                it.appName.lowercase(getDefault()).contains(query.trim().lowercase(getDefault()))
+                        || it.packageName.lowercase(getDefault()).contains(query.trim().lowercase(getDefault()))
+            }
+        }
+    }
+
+    Box(
+        modifier
+            .fillMaxSize()
+            .semantics { isTraversalGroup = true }
+    ) {
+        SearchBar(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .semantics { traversalIndex = 0f },
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        Log.d("SimpleSearchBar", query)
+                        },
+                    onSearch = {
+                       // expanded = false
+                    },
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    placeholder = { Text(stringResource(R.string.toolbar_search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    trailingIcon = { IconButton(onClick = {
+                        expanded = false
+                        onExit()
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch)) }
+                         },
+                )
+            },
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+        ) {
+            // Show search results in a lazy column for better performance
+            LazyColumn {
+                items(count = resultList.size) { index ->
+                    ShowAppInfo(resultList[index], {})
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -145,7 +225,6 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
-    var searchText by rememberSaveable { mutableStateOf("") }
     var fullAppList: List<AppInfo> = getAppList(context)
 
     // 2. 下拉刷新逻辑
@@ -165,128 +244,100 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
 
     val appList = fullAppList
         .filter { !it.systemApp || (it.systemApp && showSystemApp) }
-        .filter { it.appName.contains(searchText.trim()) }
 
-    Scaffold(
+    if(isSearchActive){
+        SimpleSearchBar({ isSearchActive = false }, appList)
+    }
+    else{
+        Scaffold(
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            TopAppBar(
-                title = {
-                    if(!isSearchActive)
-                        Text(stringResource(id = R.string.app_name))
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
-                ),
-                actions = {
-                    if(!isSearchActive) {
+            topBar = {
+                TopAppBar(
+                    title = {
+                        if(!isSearchActive)
+                            Text(stringResource(id = R.string.app_name))
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        titleContentColor = MaterialTheme.colorScheme.primary,
+                    ),
+                    actions = {
                         IconButton(onClick = { isSearchActive = true }) {
                             Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.toolbar_search))
                         }
-                    }else
-                    {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(), // Row 占据整个宽度
-                            verticalAlignment = Alignment.CenterVertically // 垂直方向居中对齐
-                        ) {
-                            IconButton(onClick = { isSearchActive = false }) {
-                                Icon(Icons.AutoMirrored.Default.ArrowBack, contentDescription = stringResource(id = R.string.toolbar_back))
-                            }
-                            TextField(
-                                value = searchText,
-                                onValueChange = { query ->
-                                    searchText = query
-                                },
-                                placeholder = { Text(stringResource(id = R.string.toolbar_search)) },
-                                singleLine = true,
-                                modifier = Modifier
-                                    .weight(1f),
-                                colors = TextFieldDefaults.colors(
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent
-                                ),
-                                trailingIcon = {
-                                    IconButton(onClick = {
-                                        isSearchActive = false
-                                        searchText = ""
-                                    }) {
-                                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch))
-                                    }
-                                }
-                            )
-                        }
-                    }
-                    //more button
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
-                    }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = stringResource(id = R.string.toolbar_showSystemApp))
 
-                                Checkbox(
-                                    checked = showSystemApp,
-                                    onCheckedChange = {
-                                        showSystemApp = it
-                                        val editor = sharedPreferences.edit()
-                                        editor.putBoolean("HideSystemApp", !showSystemApp)
-                                        editor.apply()
-                                    })
-                            }
-                        }, onClick = {
-                            showSystemApp = !showSystemApp
-                            val editor = sharedPreferences.edit()
-                            editor.putBoolean("HideSystemApp", !showSystemApp)
-                            editor.apply()
-                        })
-                        DropdownMenuItem(text = {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(text = stringResource(id = R.string.toolbar_help))
-                            }
-                        }, onClick = {
-                            onHelpItemClick()
-                        })
-                    }
-                },
-                scrollBehavior = scrollBehavior)
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = {
-                onFloatButtonClick()
-            })
-            {
-                Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
-            }
-        }
-    ) { innerPadding ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
-                // 将 pullRefresh 修改器应用于 Box
-                .pullRefresh(pullRefreshState)
-        ) {
-            LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
-                columns = GridCells.Adaptive(minSize = 360.dp)) {
-                items(appList) { item ->
-                    ShowAppInfo(item, onClick = { item ->
-                        onItemClick(item.packageName)
-                    })
+                        //more button
+                        IconButton(onClick = { menuExpanded = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
+                        }
+                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                            DropdownMenuItem(text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = stringResource(id = R.string.toolbar_showSystemApp))
+
+                                    Checkbox(
+                                        checked = showSystemApp,
+                                        onCheckedChange = {
+                                            showSystemApp = it
+                                            val editor = sharedPreferences.edit()
+                                            editor.putBoolean("HideSystemApp", !showSystemApp)
+                                            editor.apply()
+                                        })
+                                }
+                            }, onClick = {
+                                showSystemApp = !showSystemApp
+                                val editor = sharedPreferences.edit()
+                                editor.putBoolean("HideSystemApp", !showSystemApp)
+                                editor.apply()
+                            })
+                            DropdownMenuItem(text = {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(text = stringResource(id = R.string.toolbar_help))
+                                }
+                            }, onClick = {
+                                onHelpItemClick()
+                            })
+                        }
+                    },
+                    scrollBehavior = scrollBehavior)
+            },
+            floatingActionButton = {
+                FloatingActionButton(onClick = {
+                    onFloatButtonClick()
+                })
+                {
+                    Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
                 }
             }
-            // PullRefreshIndicator - 刷新指示器
-            // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
-            PullRefreshIndicator(
-                refreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                // 可选：更改颜色等属性
-                // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
-            )
+        ) { innerPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
+                    // 将 pullRefresh 修改器应用于 Box
+                    .pullRefresh(pullRefreshState)
+            ) {
+                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                    columns = GridCells.Adaptive(minSize = 360.dp)) {
+                    items(appList) { item ->
+                        ShowAppInfo(item, onClick = { item ->
+                            onItemClick(item.packageName)
+                        })
+                    }
+                }
+                // PullRefreshIndicator - 刷新指示器
+                // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
+                PullRefreshIndicator(
+                    refreshing = isRefreshing,
+                    state = pullRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter),
+                    // 可选：更改颜色等属性
+                    // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
+                )
+            }
         }
     }
+
 }
 
 @Composable
