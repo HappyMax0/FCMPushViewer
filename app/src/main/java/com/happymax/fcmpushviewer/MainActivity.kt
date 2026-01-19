@@ -357,7 +357,6 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
             }
         }
     }
-
 }
 
 @Composable
@@ -395,7 +394,7 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
                             Spacer(modifier = Modifier.weight(1f))
                             if(appInfo.supportFCM)
                                 Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
-                                    modifier=Modifier.padding(12.dp, 6.dp))
+                                    modifier=Modifier.padding(2.dp, 6.dp))
                         }
                     }
                 }
