@@ -47,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,6 +67,8 @@ import androidx.compose.ui.graphics.Color
 import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -76,6 +77,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -84,12 +86,17 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import java.util.Locale.getDefault
 
@@ -126,7 +133,33 @@ class MainActivity : ComponentActivity() {
 fun NavBase(){
     val navController = rememberNavController()
     val context = LocalContext.current
-    NavHost(navController = navController, startDestination = AppList) {
+    NavHost(navController = navController,
+        startDestination = AppList,
+        // 整个 NavHost 的全局动画配置
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(500)
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(500)
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(500)
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(500)
+            )
+        }) {
         composable<AppList> {
             AppListScreen(onItemClick = { packageName -> val intent = Intent()
                         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
@@ -208,7 +241,7 @@ fun SimpleSearchBar(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}){
+fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}, viewModel: AppListViewModel = viewModel()){
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
@@ -218,16 +251,16 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     var showNotSupportedApp by rememberSaveable { mutableStateOf(sharedPreferences.getBoolean("ShowNotSupportedApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
-    var fullAppList: List<AppInfo> = getAppList(context)
+    val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
+    //val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
     // 2. 下拉刷新逻辑
     fun refreshData() = coroutineScope.launch {
         isRefreshing = true
         // 更新数据（例如：在现有列表前插入新数据，或完全替换）
-        fullAppList = getAppList(context)
+        viewModel.loadData()
         isRefreshing = false
     }
-
     // 3. 创建 PullRefreshState
     // 记住状态，用于管理下拉手势和刷新指示器的位置
     val pullRefreshState = rememberPullRefreshState(
@@ -247,12 +280,22 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
             topBar = {
                 TopAppBar(
                     title = {
-                        if(!isSearchActive)
-                            Text(stringResource(id = R.string.app_name))
+                        if(!isSearchActive){
+                            Row(verticalAlignment = Alignment.Bottom) {
+                                Text(stringResource(id = R.string.app_name))
+                                Spacer(modifier = Modifier.width(8.dp))
+                                // 数量显示：例如 " (120)"
+                                Text(
+                                    text = "(${appList.size})",
+                                    style = MaterialTheme.typography.titleMedium, // 数量可以用稍小的字体
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant // 使用副文本颜色
+                                )
+                            }
+                        }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer,
-                        titleContentColor = MaterialTheme.colorScheme.primary,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
                     ),
                     actions = {
                         IconButton(onClick = { isSearchActive = true }) {
@@ -307,6 +350,7 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                                     Text(text = stringResource(id = R.string.toolbar_help))
                                 }
                             }, onClick = {
+                                menuExpanded = false
                                 onHelpItemClick()
                             })
                         }
@@ -322,6 +366,7 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                 }
             }
         ) { innerPadding ->
+
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -329,14 +374,21 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                     // 将 pullRefresh 修改器应用于 Box
                     .pullRefresh(pullRefreshState)
             ) {
-                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
-                    columns = GridCells.Adaptive(minSize = 360.dp)) {
-                    items(appList) { item ->
-                        ShowAppInfo(item, onClick = { item ->
-                            onItemClick(item.packageName)
-                        })
+                Column {
+                    // 使用 Spacer 手动空行
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                        columns = GridCells.Adaptive(minSize = 360.dp)
+                    ) {
+                        items(appList) { item ->
+                            ShowAppInfo(item, onClick = { item ->
+                                onItemClick(item.packageName)
+                            })
+                        }
                     }
                 }
+
                 // PullRefreshIndicator - 刷新指示器
                 // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
                 PullRefreshIndicator(
@@ -423,32 +475,6 @@ fun drawableToBitmap(drawable: Drawable): Bitmap {
     return bitmap
 }
 
-private fun getAppList(context: Context): ArrayList<AppInfo>{
-    val appList:ArrayList<AppInfo> = ArrayList<AppInfo>()
-    val packageManager = context.packageManager
-    for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-
-        if (packageInfo.receivers != null) {
-            var supportFCM = false
-            for (receiverInfo in packageInfo.receivers) {
-                if ( packageInfo.applicationInfo != null && receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver") {
-                    supportFCM = true
-                    break
-                }
-            }
-
-            val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
-            val packageName = packageInfo.packageName
-            var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
-            val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-            val appInfo = AppInfo(appName, packageName, if (icon!=null) drawableToBitmap(icon) else null, isSystemApp, supportFCM)
-            appList.add(appInfo)
-        }
-
-    }
-    return  appList
-}
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpPage(onBackBtnPressed:()->Unit = {}){
@@ -462,8 +488,8 @@ fun HelpPage(onBackBtnPressed:()->Unit = {}){
                     Text(stringResource(id = R.string.toolbar_help))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.primary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
                 ),
                 navigationIcon = {
                     IconButton(onClick = { onBackBtnPressed() }) {
