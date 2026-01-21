@@ -230,9 +230,16 @@ fun SimpleSearchBar(
             onExpandedChange = { expanded = it },
         ) {
             // Show search results in a lazy column for better performance
-            LazyColumn {
-                items(count = resultList.size) { index ->
-                    ShowAppInfo(resultList[index], {})
+            Column {
+                // 使用 Spacer 手动空行
+                Spacer(modifier = Modifier.height(20.dp))
+
+                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                    columns = GridCells.Adaptive(minSize = 360.dp)
+                ) {
+                    items(count = resultList.size) { index ->
+                        ShowAppInfo(resultList[index], {})
+                    }
                 }
             }
         }
