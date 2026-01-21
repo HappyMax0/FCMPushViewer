@@ -415,7 +415,7 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
 
     // 使用 Card 或 Surface 来自动处理圆角和深色模式背景
     Card(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(6.dp)
             .clip(RoundedCornerShape(24.dp))
@@ -427,11 +427,11 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // 如果不需要阴影可以设为0
     ){
-        Row(modifier = modifier
+        Row(modifier = Modifier
             .fillMaxWidth()
             .padding(10.dp)
             , horizontalArrangement = Arrangement.SpaceBetween){
-            Box(modifier=modifier.weight(1f)){
+            Box(modifier=Modifier.weight(1f)){
                 Row {
                     if(appInfo.icon != null)
                         Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
@@ -444,17 +444,21 @@ fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier 
                         Row{
                             Text(
                                 text = appInfo.appName,
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = modifier
                             )
                             // 这个 Spacer 会占据所有剩余空间
                             Spacer(modifier = Modifier.weight(1f))
                             if(appInfo.supportFCM)
-                                Icon(painterResource(R.drawable.cloud_done_24px), contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                Icon(painterResource(R.drawable.cloud_done_24px),
+                                    contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                    tint = MaterialTheme.colorScheme.onSurface,
                                     modifier=Modifier.padding(4.dp, 4.dp, 10.dp, 4.dp))
                         }
 
                         Text(
                             text = appInfo.packageName,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = modifier,
                             fontSize = 12.sp
                         )
