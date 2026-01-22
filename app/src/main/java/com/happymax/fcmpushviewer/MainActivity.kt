@@ -101,7 +101,10 @@ import kotlinx.coroutines.launch
 import java.util.Locale.getDefault
 
 @Serializable
-object AppList
+object Main
+
+@Serializable
+object Search
 
 @Serializable
 object Help
@@ -134,7 +137,7 @@ fun NavBase(){
     val navController = rememberNavController()
     val context = LocalContext.current
     NavHost(navController = navController,
-        startDestination = AppList,
+        startDestination = Main,
         // 整个 NavHost 的全局动画配置
         enterTransition = {
             slideIntoContainer(
@@ -160,15 +163,20 @@ fun NavBase(){
                 animationSpec = tween(500)
             )
         }) {
-        composable<AppList> {
+        composable<Main> {
             AppListScreen(onItemClick = { packageName -> val intent = Intent()
                         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                         intent.setData(Uri.parse("package:" + packageName))
                         context.startActivity(intent)
             }, onFloatButtonClick = {
                 val intent = Intent(context, FCMActivity::class.java)
-                context.startActivity(intent)},
+                context.startActivity(intent)
+                                    },
+                onSearchClick = { navController.navigate(route = Search) },
                 onHelpItemClick = { navController.navigate(route = Help) }) }
+
+        composable<Search> { SearchPage() }
+
         composable<Help> { HelpPage(onBackBtnPressed = { navController.popBackStack() }) }
     }
 }
@@ -176,7 +184,6 @@ fun NavBase(){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimpleSearchBar(
-    onExit: ()->Unit,
     source: List<AppInfo>,
     modifier: Modifier = Modifier
 ) {
@@ -219,8 +226,7 @@ fun SimpleSearchBar(
                     placeholder = { Text(stringResource(R.string.toolbar_search)) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
                     trailingIcon = { IconButton(onClick = {
-                        expanded = false
-                        onExit()
+                        query = ""
                     }) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch)) }
                          },
@@ -248,7 +254,7 @@ fun SimpleSearchBar(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
-fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}, viewModel: AppListViewModel = viewModel()){
+fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onSearchClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}, viewModel: AppListViewModel = viewModel()){
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
@@ -257,7 +263,6 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
     var showNotSupportedApp by rememberSaveable { mutableStateOf(sharedPreferences.getBoolean("ShowNotSupportedApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
-    var isSearchActive by rememberSaveable { mutableStateOf(false) }
     val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
     //val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
 
@@ -278,134 +283,127 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     val appList = fullAppList
         .filter { (!it.systemApp || (it.systemApp && showSystemApp)) && (it.supportFCM || it.supportFCM != showNotSupportedApp) }
 
-    if(isSearchActive){
-        SimpleSearchBar({ isSearchActive = false }, appList)
-    }
-    else{
-        Scaffold(
-            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-            topBar = {
-                TopAppBar(
-                    title = {
-                        if(!isSearchActive){
-                            Row(verticalAlignment = Alignment.Bottom) {
-                                Text(stringResource(id = R.string.app_name))
-                                Spacer(modifier = Modifier.width(8.dp))
-                                // 数量显示：例如 " (120)"
-                                Text(
-                                    text = "(${appList.size})",
-                                    style = MaterialTheme.typography.titleMedium, // 数量可以用稍小的字体
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant // 使用副文本颜色
-                                )
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.Bottom) {
+                        Text(stringResource(id = R.string.app_name))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 数量显示：例如 " (120)"
+                        Text(
+                            text = "(${appList.size})",
+                            style = MaterialTheme.typography.titleMedium, // 数量可以用稍小的字体
+                            color = MaterialTheme.colorScheme.onSurfaceVariant // 使用副文本颜色
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
+                ),
+                actions = {
+                    IconButton(onClick = { onSearchClick() }) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.toolbar_search))
+                    }
+
+                    //more button
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_showSystemApp))
+
+                                Checkbox(
+                                    checked = showSystemApp,
+                                    onCheckedChange = {
+                                        showSystemApp = it
+                                        val editor = sharedPreferences.edit()
+                                        editor.putBoolean("HideSystemApp", !showSystemApp)
+                                        editor.apply()
+                                    })
                             }
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                        scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
-                    ),
-                    actions = {
-                        IconButton(onClick = { isSearchActive = true }) {
-                            Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.toolbar_search))
-                        }
+                        }, onClick = {
+                            showSystemApp = !showSystemApp
+                            val editor = sharedPreferences.edit()
+                            editor.putBoolean("HideSystemApp", !showSystemApp)
+                            editor.apply()
+                        })
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_showUnsupportApp))
 
-                        //more button
-                        IconButton(onClick = { menuExpanded = true }) {
-                            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
-                        }
-                        DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                            DropdownMenuItem(text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = stringResource(id = R.string.toolbar_showSystemApp))
-
-                                    Checkbox(
-                                        checked = showSystemApp,
-                                        onCheckedChange = {
-                                            showSystemApp = it
-                                            val editor = sharedPreferences.edit()
-                                            editor.putBoolean("HideSystemApp", !showSystemApp)
-                                            editor.apply()
-                                        })
-                                }
-                            }, onClick = {
-                                showSystemApp = !showSystemApp
-                                val editor = sharedPreferences.edit()
-                                editor.putBoolean("HideSystemApp", !showSystemApp)
-                                editor.apply()
-                            })
-                            DropdownMenuItem(text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = stringResource(id = R.string.toolbar_showUnsupportApp))
-
-                                    Checkbox(
-                                        checked = showNotSupportedApp,
-                                        onCheckedChange = {
-                                            showNotSupportedApp = it
-                                            val editor = sharedPreferences.edit()
-                                            editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
-                                            editor.apply()
-                                        })
-                                }
-                            }, onClick = {
-                                showNotSupportedApp = !showNotSupportedApp
-                                val editor = sharedPreferences.edit()
-                                editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
-                                editor.apply()
-                            })
-                            DropdownMenuItem(text = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(text = stringResource(id = R.string.toolbar_help))
-                                }
-                            }, onClick = {
-                                menuExpanded = false
-                                onHelpItemClick()
-                            })
-                        }
-                    },
-                    scrollBehavior = scrollBehavior)
-            },
-            floatingActionButton = {
-                FloatingActionButton(onClick = {
-                    onFloatButtonClick()
-                })
-                {
-                    Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
-                }
+                                Checkbox(
+                                    checked = showNotSupportedApp,
+                                    onCheckedChange = {
+                                        showNotSupportedApp = it
+                                        val editor = sharedPreferences.edit()
+                                        editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
+                                        editor.apply()
+                                    })
+                            }
+                        }, onClick = {
+                            showNotSupportedApp = !showNotSupportedApp
+                            val editor = sharedPreferences.edit()
+                            editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
+                            editor.apply()
+                        })
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_help))
+                            }
+                        }, onClick = {
+                            menuExpanded = false
+                            onHelpItemClick()
+                        })
+                    }
+                },
+                scrollBehavior = scrollBehavior)
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                onFloatButtonClick()
+            })
+            {
+                Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
             }
-        ) { innerPadding ->
+        }
+    ) { innerPadding ->
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
-                    // 将 pullRefresh 修改器应用于 Box
-                    .pullRefresh(pullRefreshState)
-            ) {
-                Column {
-                    // 使用 Spacer 手动空行
-                    Spacer(modifier = Modifier.height(20.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
+                // 将 pullRefresh 修改器应用于 Box
+                .pullRefresh(pullRefreshState)
+        ) {
+            Column {
+                // 使用 Spacer 手动空行
+                Spacer(modifier = Modifier.height(20.dp))
 
-                    LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
-                        columns = GridCells.Adaptive(minSize = 360.dp)
-                    ) {
-                        items(appList) { item ->
-                            ShowAppInfo(item, onClick = { item ->
-                                onItemClick(item.packageName)
-                            })
-                        }
+                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                    columns = GridCells.Adaptive(minSize = 360.dp)
+                ) {
+                    items(appList) { item ->
+                        ShowAppInfo(item, onClick = { item ->
+                            onItemClick(item.packageName)
+                        })
                     }
                 }
-
-                // PullRefreshIndicator - 刷新指示器
-                // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
-                PullRefreshIndicator(
-                    refreshing = isRefreshing,
-                    state = pullRefreshState,
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    // 可选：更改颜色等属性
-                    // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
-                )
             }
+
+            // PullRefreshIndicator - 刷新指示器
+            // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
+            PullRefreshIndicator(
+                refreshing = isRefreshing,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter),
+                // 可选：更改颜色等属性
+                // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
+            )
         }
     }
 }
@@ -484,6 +482,15 @@ fun drawableToBitmap(drawable: Drawable): Bitmap {
     drawable.setBounds(0, 0, canvas.width, canvas.height)
     drawable.draw(canvas)
     return bitmap
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchPage(viewModel: AppListViewModel = viewModel()){
+    val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
+
+    SimpleSearchBar(fullAppList)
+
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
