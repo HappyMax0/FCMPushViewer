@@ -8,9 +8,11 @@ import android.graphics.drawable.Drawable
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class AppListViewModel(application: Application) : AndroidViewModel(application) {
     private val context = getApplication<Application>().applicationContext
@@ -31,7 +33,9 @@ class AppListViewModel(application: Application) : AndroidViewModel(application)
             _isRefreshing.value = true
             try {
                 // 模拟网络耗时或数据库查询
-                val data = getAppList()
+                val data = withContext(Dispatchers.IO) {
+                    getAppList()
+                }
                 _appList.value = data
             } catch (e: Exception) {
                 // 处理错误逻辑

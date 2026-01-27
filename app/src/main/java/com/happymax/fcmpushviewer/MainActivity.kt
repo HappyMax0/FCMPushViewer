@@ -1,9 +1,6 @@
 package com.happymax.fcmpushviewer
 
-import android.content.Context
 import android.content.Intent
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
@@ -23,7 +20,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Search
@@ -34,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -69,6 +64,7 @@ import android.provider.Settings
 import android.util.Log
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -86,8 +82,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -163,7 +159,10 @@ fun NavBase(){
                 animationSpec = tween(500)
             )
         }) {
-        composable<Main> {
+        composable<Main> { backStackEntry ->
+            // 获取 Parent 路由或当前导航图的 ViewModel
+            val viewModel: AppListViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+
             AppListScreen(onItemClick = { packageName -> val intent = Intent()
                         intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
                         intent.setData(Uri.parse("package:" + packageName))
@@ -173,9 +172,23 @@ fun NavBase(){
                 context.startActivity(intent)
                                     },
                 onSearchClick = { navController.navigate(route = Search) },
-                onHelpItemClick = { navController.navigate(route = Help) }) }
+                onHelpItemClick = { navController.navigate(route = Help) },
+                viewModel) }
 
-        composable<Search> { SearchPage() }
+        composable<Search> { backStackEntry ->
+            // 同样获取刚才那个页面的 ViewModel (取决于你的导航层级)
+            // 或者通过 parentEntry 共享：
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Main)
+            }
+            val viewModel: AppListViewModel = viewModel(viewModelStoreOwner = parentEntry)
+            SearchPage(onItemClick = { packageName -> val intent = Intent()
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.setData(Uri.parse("package:" + packageName))
+                context.startActivity(intent)
+            },
+                { navController.popBackStack() },
+                viewModel) }
 
         composable<Help> { HelpPage(onBackBtnPressed = { navController.popBackStack() }) }
     }
@@ -185,6 +198,8 @@ fun NavBase(){
 @Composable
 fun SimpleSearchBar(
     source: List<AppInfo>,
+    onItemClick: (String) -> Unit ={} ,
+    onBackBtnPressed: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     // Controls expansion state of the search bar
@@ -224,7 +239,9 @@ fun SimpleSearchBar(
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
                     placeholder = { Text(stringResource(R.string.toolbar_search)) },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search") },
+                    leadingIcon =  { IconButton(onClick = { onBackBtnPressed() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.toolbar_back))
+                    }},
                     trailingIcon = { IconButton(onClick = {
                         query = ""
                     }) {
@@ -244,7 +261,7 @@ fun SimpleSearchBar(
                     columns = GridCells.Adaptive(minSize = 360.dp)
                 ) {
                     items(count = resultList.size) { index ->
-                        ShowAppInfo(resultList[index], {})
+                        ShowAppInfo(resultList[index], { appInfo -> onItemClick(appInfo.packageName) })
                     }
                 }
             }
@@ -258,28 +275,11 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
     val context = LocalContext.current
     val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
-    val coroutineScope = rememberCoroutineScope()
-    var isRefreshing by remember { mutableStateOf(false) }
     var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
     var showNotSupportedApp by rememberSaveable { mutableStateOf(sharedPreferences.getBoolean("ShowNotSupportedApp", false)) }
     var menuExpanded by remember { mutableStateOf(false) }
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
-    //val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-
-    // 2. 下拉刷新逻辑
-    fun refreshData() = coroutineScope.launch {
-        isRefreshing = true
-        // 更新数据（例如：在现有列表前插入新数据，或完全替换）
-        viewModel.loadData()
-        isRefreshing = false
-    }
-    // 3. 创建 PullRefreshState
-    // 记住状态，用于管理下拉手势和刷新指示器的位置
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = isRefreshing, // 当前是否正在刷新
-        onRefresh = ::refreshData // 触发下拉时调用的函数
-    )
-
     val appList = fullAppList
         .filter { (!it.systemApp || (it.systemApp && showSystemApp)) && (it.supportFCM || it.supportFCM != showNotSupportedApp) }
 
@@ -288,7 +288,7 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
         topBar = {
             TopAppBar(
                 title = {
-                    Row(verticalAlignment = Alignment.Bottom) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(stringResource(id = R.string.app_name))
                         Spacer(modifier = Modifier.width(8.dp))
                         // 数量显示：例如 " (120)"
@@ -373,12 +373,14 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
         }
     ) { innerPadding ->
 
-        Box(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                viewModel.loadData()
+            },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
-                // 将 pullRefresh 修改器应用于 Box
-                .pullRefresh(pullRefreshState)
         ) {
             Column {
                 // 使用 Spacer 手动空行
@@ -394,16 +396,6 @@ fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> 
                     }
                 }
             }
-
-            // PullRefreshIndicator - 刷新指示器
-            // 确保它覆盖在 LazyColumn 之上，并位于顶部中央
-            PullRefreshIndicator(
-                refreshing = isRefreshing,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter),
-                // 可选：更改颜色等属性
-                // scale = true // 如果你想要 Material 3 风格的缩小/放大动画
-            )
         }
     }
 }
@@ -486,10 +478,10 @@ fun drawableToBitmap(drawable: Drawable): Bitmap {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchPage(viewModel: AppListViewModel = viewModel()){
+fun SearchPage(onItemClick: (String) -> Unit ={} , onBackBtnPressed: () -> Unit ={} ,viewModel: AppListViewModel = viewModel()){
     val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
 
-    SimpleSearchBar(fullAppList)
+    SimpleSearchBar(fullAppList, onItemClick, onBackBtnPressed)
 
 }
 
