@@ -107,34 +107,13 @@ object Help
 
 class MainActivity : ComponentActivity() {
 
-    private var showNotSupportedApp:Boolean = false
-        get() = field
-        set(value){
-            showAppList = fullAppList.filter { !it.systemApp || it.systemApp == showSystemApp }
-                .filter { it.supportFCM || it.supportFCM != value }
-                    as ArrayList<AppInfo>
-
-            recyclerView.adapter = AppInfoListAdapter(showAppList)
-
-            val editor = sharedPreferences.edit()
-            editor.putBoolean("ShowNotSupportedApp", value)
-            editor.apply()
-            field = value
-        }
-
-    @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
-
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
         setContent {
             FCMPushViewerTheme{
                 NavBase()
-            }
-            R.id.ShowUnsupportedApp -> {
-
             }
         }
     }
@@ -185,13 +164,13 @@ fun NavBase(){
             val viewModel: AppListViewModel = viewModel(viewModelStoreOwner = backStackEntry)
 
             AppListScreen(onItemClick = { packageName -> val intent = Intent()
-                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
-                        intent.setData(Uri.parse("package:" + packageName))
-                        context.startActivity(intent)
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.setData(Uri.parse("package:" + packageName))
+                context.startActivity(intent)
             }, onFloatButtonClick = {
                 val intent = Intent(context, FCMActivity::class.java)
                 context.startActivity(intent)
-                                    },
+            },
                 onSearchClick = { navController.navigate(route = Search) },
                 onHelpItemClick = { navController.navigate(route = Help) },
                 viewModel) }
@@ -253,9 +232,9 @@ fun SimpleSearchBar(
                     onQueryChange = {
                         query = it
                         Log.d("SimpleSearchBar", query)
-                        },
+                    },
                     onSearch = {
-                       // expanded = false
+                        // expanded = false
                     },
                     expanded = expanded,
                     onExpandedChange = { expanded = it },
@@ -267,7 +246,7 @@ fun SimpleSearchBar(
                         query = ""
                     }) {
                         Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch)) }
-                         },
+                    },
                 )
             },
             expanded = expanded,
