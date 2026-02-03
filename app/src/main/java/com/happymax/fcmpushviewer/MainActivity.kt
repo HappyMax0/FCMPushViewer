@@ -1,67 +1,111 @@
 package com.happymax.fcmpushviewer
 
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageManager
-import android.content.res.Configuration
-import android.graphics.Color
-import android.graphics.Rect
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
-import android.util.TypedValue
-import android.view.Menu
-import android.view.MenuItem
-import android.view.View
-import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.annotation.RequiresApi
-import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.widget.SearchView
-import androidx.appcompat.widget.Toolbar
-import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.graphics.Insets
-import androidx.core.view.MenuItemCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.updatePadding
-import androidx.fragment.app.Fragment
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import com.google.android.material.appbar.AppBarLayout
-import com.google.android.material.floatingactionbutton.FloatingActionButton
-import kotlin.concurrent.thread
+import androidx.appcompat.app.AppCompatActivity.MODE_PRIVATE
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.rememberTopAppBarState
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.painterResource
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.happymax.fcmpushviewer.ui.theme.FCMPushViewerTheme
+import kotlinx.serialization.Serializable
+import androidx.compose.ui.graphics.Color
+import android.net.Uri
+import android.provider.Settings
+import android.util.Log
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.SearchBar
+import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import kotlinx.coroutines.launch
+import java.util.Locale.getDefault
 
+@Serializable
+object Main
 
-class MainActivity : AppCompatActivity() {
-    private lateinit var mainFragment: MainFragment
-    private lateinit var mSearchView: SearchView
-    private lateinit var recyclerView: RecyclerView
-    private lateinit var swipeRefresh: SwipeRefreshLayout
-    private lateinit var sharedPreferences: SharedPreferences
-    private var fullAppList = ArrayList<AppInfo>()
-    private var showAppList = ArrayList<AppInfo>()
+@Serializable
+object Search
 
-    private var showSystemApp:Boolean = false
-        get() = field
-        set(value){
-            showAppList = fullAppList.filter { !it.systemApp || it.systemApp == value }
-                .filter { it.supportFCM || it.supportFCM != showNotSupportedApp }
-                    as ArrayList<AppInfo>
+@Serializable
+object Help
 
-            recyclerView.adapter = AppInfoListAdapter(showAppList)
-
-            val editor = sharedPreferences.edit()
-            editor.putBoolean("HideSystemApp", !value)
-            editor.apply()
-            field = value
-        }
+class MainActivity : ComponentActivity() {
 
     private var showNotSupportedApp:Boolean = false
         get() = field
@@ -83,275 +127,16 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
 
-        setContentView(R.layout.activity_main)
-
-        setupWindow()
-
-        val toolbar: Toolbar = findViewById(R.id.toolBar)
-        setSupportActionBar(toolbar)
-
-        sharedPreferences = getSharedPreferences("settings", MODE_PRIVATE)
-
-        mainFragment = supportFragmentManager.findFragmentById(R.id.main_fragment) as MainFragment
-
-        recyclerView = findViewById<RecyclerView>(R.id.recyclerView)
-
-        setRecyclerView()
-
-        showSystemApp = !sharedPreferences.getBoolean("HideSystemApp", true)
-
-        showNotSupportedApp = sharedPreferences.getBoolean("ShowNotSupportedApp", false)
-
-        val colorAccent = getThemeColor(this, androidx.appcompat.R.attr.colorAccent)
-
-        swipeRefresh = findViewById<SwipeRefreshLayout>(R.id.swipeRefresh)
-        swipeRefresh.setColorSchemeColors(colorAccent)
-        swipeRefresh.setOnRefreshListener {
-            refreshAppList()
-        }
-
-        val floatingActionBtn:FloatingActionButton = findViewById(R.id.floatingActionBtn)
-        floatingActionBtn.setOnClickListener { view ->
-            navigateToFCM()
-           }
-
-        swipeRefresh.isRefreshing = true
-        refreshAppList()
-    }
-
-    private fun refreshAppList(){
-        thread {
-            fullAppList = getAppList()
-
-            runOnUiThread {
-                showAppList = fullAppList.filter { !it.systemApp || it.systemApp == showSystemApp }
-                    .filter { it.supportFCM || it.supportFCM != showNotSupportedApp }
-                        as ArrayList<AppInfo>
-
-                recyclerView.adapter = AppInfoListAdapter(showAppList)
-
-                swipeRefresh.isRefreshing = false
-            }
-        }
-    }
-
-    private fun setRecyclerView(){
-        val isLargeLayout = (resources.configuration.screenLayout and Configuration.SCREENLAYOUT_SIZE_MASK) >= Configuration.SCREENLAYOUT_SIZE_LARGE
-        if(!isLargeLayout){
-            recyclerView.layoutManager = LinearLayoutManager(this)
-        }
-        else{
-            val spanCount = calculateSpanCount()
-            recyclerView.layoutManager = GridLayoutManager(this, spanCount)
-        }
-    }
-
-    private fun setupWindow() {
-        val coordinatorLayout: CoordinatorLayout = findViewById(R.id.coordinatorLayout)
-
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        ViewCompat.setOnApplyWindowInsetsListener(coordinatorLayout) { v, insets ->
-            val systemWindowInsets = insets.getInsets(
-                WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.ime()
-            )
-            coordinatorLayout.updatePadding(
-                top = systemWindowInsets.top,
-                left = systemWindowInsets.left,
-                right = systemWindowInsets.right,
-                bottom = systemWindowInsets.bottom)
-
-            val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
-            WindowInsetsCompat.Builder(insets)
-                .setInsets(
-                    WindowInsetsCompat.Type.systemBars(),
-                    Insets.of(0, 0, 0, systemBarInsets.bottom)
-                )
-                .setInsets(
-                    WindowInsetsCompat.Type.ime(),
-                    Insets.of(0, 0, 0, imeInsets.bottom)
-                )
-                .build()
-        }
-    }
-
-    private fun getThemeColor(context: Context, attribute: Int): Int {
-        val typedValue = TypedValue()
-        val theme = context.theme
-        theme.resolveAttribute(attribute, typedValue, true)
-        return typedValue.data
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.activity_main_toolbar, menu)
-        val item = menu?.findItem(R.id.search)
-        if(item != null){
-            mSearchView = MenuItemCompat.getActionView(item) as SearchView
-            mSearchView.isIconified = true
-            mSearchView.isSubmitButtonEnabled = false
-            mSearchView.setOnSearchClickListener {
-                supportActionBar?.setDisplayHomeAsUpEnabled(true)//添加默认的返回图标
-                supportActionBar?.setHomeButtonEnabled(true)//设置返回键可用
-            }
-
-            mSearchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener{
-                override fun onQueryTextSubmit(query: String?): Boolean {
-                    //提交文本时调用
-                    if(!query.isNullOrEmpty())
-                    {
-                        val querySequence = query
-                        val filteredList = showAppList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
-                        recyclerView.adapter = AppInfoListAdapter(filteredList)
-                        return true
-                    }
-                    else
-                        return false
-                }
-
-                override fun onQueryTextChange(newText: String?): Boolean {
-                    //文本搜索框发生变化时调用
-                    if(!newText.isNullOrEmpty()){
-                        val querySequence = newText
-                        val filteredList = showAppList.filter { it.appName.contains(querySequence, true) || it.packageName.contains(querySequence, true) }
-                        recyclerView.adapter = AppInfoListAdapter(filteredList)
-                        return true
-                    }
-                    else{
-                        recyclerView.adapter = AppInfoListAdapter(showAppList)
-                        return true
-                    }
-                    return false
-                }
-            })
-            mSearchView.setOnCloseListener(object : SearchView.OnCloseListener{
-                override fun onClose(): Boolean {
-                    recyclerView.adapter = AppInfoListAdapter(showAppList)
-                    mSearchView.clearFocus()
-                    mSearchView.onActionViewCollapsed()
-                    supportActionBar?.setDisplayHomeAsUpEnabled(false)//添加默认的返回图标
-                    supportActionBar?.setHomeButtonEnabled(false)//设置返回键可用
-                    return true
-                }
-            })
-
-        }
-
-        val hideSystemAppCheckItem = menu?.findItem(R.id.HideSystemApp)
-        if(hideSystemAppCheckItem != null){
-            hideSystemAppCheckItem.isChecked = showSystemApp
-            hideSystemAppCheckItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
-                override fun onMenuItemClick(item: MenuItem): Boolean {
-                    if(!item.isChecked){
-                        //Hide System App
-                        showSystemApp = true
-
-                        item.isChecked = true
-                    }
-                    else{
-                        showSystemApp = false
-
-                        item.isChecked = false
-                    }
-                    return true;
-                }
-            })
-        }
-
-        val showUnsupportAppCheckItem = menu?.findItem(R.id.ShowUnsupportedApp)
-        if(showUnsupportAppCheckItem != null){
-            showUnsupportAppCheckItem.isChecked = showNotSupportedApp
-            showUnsupportAppCheckItem.setOnMenuItemClickListener(object : MenuItem.OnMenuItemClickListener{
-                override fun onMenuItemClick(item: MenuItem): Boolean {
-                    if(!item.isChecked){
-                        //Hide System App
-                        showNotSupportedApp = true
-
-                        item.isChecked = true
-                    }
-                    else{
-                        showNotSupportedApp = false
-
-                        item.isChecked = false
-                    }
-                    return true;
-                }
-            })
-        }
-
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId){
-            android.R.id.home -> {
-                PressBackBtn()
-            }
-            R.id.help -> {
-                val intent = Intent(this, HelpActivity::class.java)
-                startActivity(intent)
-            }
-            R.id.HideSystemApp -> {
-
+        setContent {
+            FCMPushViewerTheme{
+                NavBase()
             }
             R.id.ShowUnsupportedApp -> {
 
             }
         }
-        return true
-    }
-
-    private fun navigateToFCM(){
-        val intent = Intent()
-        val comp = ComponentName("com.google.android.gms", "com.google.android.gms.gcm.GcmDiagnostics")
-        intent.setComponent(comp)
-        startActivity(intent)
-    }
-
-    private fun PressBackBtn(){
-        if(!mSearchView.isIconified){
-            mSearchView.setQuery("", false)
-            mSearchView.clearFocus()
-            mSearchView.onActionViewCollapsed()
-            supportActionBar?.setDisplayHomeAsUpEnabled(false)//添加默认的返回图标
-            supportActionBar?.setHomeButtonEnabled(false)//设置返回键可用
-        }else{
-            moveTaskToBack(true)
-        }
-    }
-
-    private fun getAppList():ArrayList<AppInfo>{
-        val appList = ArrayList<AppInfo>()
-        val packageManager = packageManager
-        for (packageInfo in packageManager.getInstalledPackages(PackageManager.GET_RECEIVERS)) {
-            var supportFCM = false
-            if (packageInfo?.receivers != null) {
-                for (receiverInfo in packageInfo.receivers!!) {
-                    supportFCM = receiverInfo.name == "com.google.firebase.iid.FirebaseInstanceIdReceiver" || receiverInfo.name == "com.google.android.gms.measurement.AppMeasurementReceiver"
-                    if(supportFCM)
-                        break
-                }
-            }
-
-            if(packageInfo.applicationInfo != null)
-            {
-                val appName = packageInfo.applicationInfo!!.loadLabel(packageManager).toString()
-                val packageName = packageInfo.packageName
-                var icon:Drawable? = packageInfo.applicationInfo!!.loadIcon(packageManager);
-                val isSystemApp = (packageInfo.applicationInfo!!.flags and ApplicationInfo.FLAG_SYSTEM) != 0
-                val appInfo = AppInfo(appName, packageName, icon, isSystemApp, supportFCM)
-                appList.add(appInfo)
-            }
-        }
-        return appList
-    }
-
-    private fun replaceFragment(layoutID:Int, fragment: Fragment){
-        val fragmentManager = supportFragmentManager
-        val transaction = fragmentManager.beginTransaction()
-        transaction.replace(layoutID, fragment)
-        transaction.addToBackStack(null)
-        transaction.commit()
     }
 
     private fun calculateSpanCount(): Int {
@@ -360,5 +145,454 @@ class MainActivity : AppCompatActivity() {
         val columnWidthDp = 400 // 每列的宽度（dp）
 
         return (screenWidthDp / columnWidthDp).toInt().coerceAtLeast(1)
+    }
+
+}
+
+@Composable
+fun NavBase(){
+    val navController = rememberNavController()
+    val context = LocalContext.current
+    NavHost(navController = navController,
+        startDestination = Main,
+        // 整个 NavHost 的全局动画配置
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(500)
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(500)
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(500)
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(500)
+            )
+        }) {
+        composable<Main> { backStackEntry ->
+            // 获取 Parent 路由或当前导航图的 ViewModel
+            val viewModel: AppListViewModel = viewModel(viewModelStoreOwner = backStackEntry)
+
+            AppListScreen(onItemClick = { packageName -> val intent = Intent()
+                        intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                        intent.setData(Uri.parse("package:" + packageName))
+                        context.startActivity(intent)
+            }, onFloatButtonClick = {
+                val intent = Intent(context, FCMActivity::class.java)
+                context.startActivity(intent)
+                                    },
+                onSearchClick = { navController.navigate(route = Search) },
+                onHelpItemClick = { navController.navigate(route = Help) },
+                viewModel) }
+
+        composable<Search> { backStackEntry ->
+            // 同样获取刚才那个页面的 ViewModel (取决于你的导航层级)
+            // 或者通过 parentEntry 共享：
+            val parentEntry = remember(backStackEntry) {
+                navController.getBackStackEntry(Main)
+            }
+            val viewModel: AppListViewModel = viewModel(viewModelStoreOwner = parentEntry)
+            SearchPage(onItemClick = { packageName -> val intent = Intent()
+                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                intent.setData(Uri.parse("package:" + packageName))
+                context.startActivity(intent)
+            },
+                { navController.popBackStack() },
+                viewModel) }
+
+        composable<Help> { HelpPage(onBackBtnPressed = { navController.popBackStack() }) }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SimpleSearchBar(
+    source: List<AppInfo>,
+    onItemClick: (String) -> Unit ={} ,
+    onBackBtnPressed: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Controls expansion state of the search bar
+    var expanded by rememberSaveable { mutableStateOf(true) }
+    // Manage query state
+    var query by rememberSaveable { mutableStateOf("") }
+
+    // Filter items based on query
+    val resultList by remember {
+        derivedStateOf {
+            source.filter {
+                it.appName.lowercase(getDefault()).contains(query.trim().lowercase(getDefault()))
+                        || it.packageName.lowercase(getDefault()).contains(query.trim().lowercase(getDefault()))
+            }
+        }
+    }
+
+    Box(
+        modifier
+            .fillMaxSize()
+            .semantics { isTraversalGroup = true }
+    ) {
+        SearchBar(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .semantics { traversalIndex = 0f },
+            inputField = {
+                SearchBarDefaults.InputField(
+                    query = query,
+                    onQueryChange = {
+                        query = it
+                        Log.d("SimpleSearchBar", query)
+                        },
+                    onSearch = {
+                       // expanded = false
+                    },
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    placeholder = { Text(stringResource(R.string.toolbar_search)) },
+                    leadingIcon =  { IconButton(onClick = { onBackBtnPressed() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.toolbar_back))
+                    }},
+                    trailingIcon = { IconButton(onClick = {
+                        query = ""
+                    }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(id = R.string.toolbar_exitSearch)) }
+                         },
+                )
+            },
+            expanded = expanded,
+            onExpandedChange = { expanded = it },
+        ) {
+            // Show search results in a lazy column for better performance
+            Column {
+                // 使用 Spacer 手动空行
+                Spacer(modifier = Modifier.height(20.dp))
+
+                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                    columns = GridCells.Adaptive(minSize = 360.dp)
+                ) {
+                    items(count = resultList.size) { index ->
+                        ShowAppInfo(resultList[index], { appInfo -> onItemClick(appInfo.packageName) })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@Composable
+fun AppListScreen(onItemClick: (String) -> Unit ={} , onFloatButtonClick: () -> Unit = {}, onSearchClick: () -> Unit = {}, onHelpItemClick: () -> Unit = {}, viewModel: AppListViewModel = viewModel()){
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+    val context = LocalContext.current
+    val sharedPreferences = context.getSharedPreferences("settings", MODE_PRIVATE)
+    var showSystemApp by rememberSaveable { mutableStateOf(!sharedPreferences.getBoolean("HideSystemApp", false)) }
+    var showNotSupportedApp by rememberSaveable { mutableStateOf(sharedPreferences.getBoolean("ShowNotSupportedApp", false)) }
+    var menuExpanded by remember { mutableStateOf(false) }
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
+    val appList = fullAppList
+        .filter { (!it.systemApp || (it.systemApp && showSystemApp)) && (it.supportFCM || it.supportFCM != showNotSupportedApp) }
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(id = R.string.app_name))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        // 数量显示：例如 " (120)"
+                        Text(
+                            text = "(${appList.size})",
+                            style = MaterialTheme.typography.titleMedium, // 数量可以用稍小的字体
+                            color = MaterialTheme.colorScheme.onSurfaceVariant // 使用副文本颜色
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
+                ),
+                actions = {
+                    IconButton(onClick = { onSearchClick() }) {
+                        Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.toolbar_search))
+                    }
+
+                    //more button
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.toolbar_more))
+                    }
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_showSystemApp))
+
+                                Checkbox(
+                                    checked = showSystemApp,
+                                    onCheckedChange = {
+                                        showSystemApp = it
+                                        val editor = sharedPreferences.edit()
+                                        editor.putBoolean("HideSystemApp", !showSystemApp)
+                                        editor.apply()
+                                    })
+                            }
+                        }, onClick = {
+                            showSystemApp = !showSystemApp
+                            val editor = sharedPreferences.edit()
+                            editor.putBoolean("HideSystemApp", !showSystemApp)
+                            editor.apply()
+                        })
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_showUnsupportApp))
+
+                                Checkbox(
+                                    checked = showNotSupportedApp,
+                                    onCheckedChange = {
+                                        showNotSupportedApp = it
+                                        val editor = sharedPreferences.edit()
+                                        editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
+                                        editor.apply()
+                                    })
+                            }
+                        }, onClick = {
+                            showNotSupportedApp = !showNotSupportedApp
+                            val editor = sharedPreferences.edit()
+                            editor.putBoolean("ShowNotSupportedApp", showNotSupportedApp)
+                            editor.apply()
+                        })
+                        DropdownMenuItem(text = {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(text = stringResource(id = R.string.toolbar_help))
+                            }
+                        }, onClick = {
+                            menuExpanded = false
+                            onHelpItemClick()
+                        })
+                    }
+                },
+                scrollBehavior = scrollBehavior)
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                onFloatButtonClick()
+            })
+            {
+                Icon(painterResource(R.drawable.baseline_cloud_sync), contentDescription = stringResource(R.string.toolbar_openGcmDiagnostics))
+            }
+        }
+    ) { innerPadding ->
+
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = {
+                viewModel.loadData()
+            },
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding) // 确保内容避开 TopAppBar 和 BottomBar
+        ) {
+            Column {
+                // 使用 Spacer 手动空行
+                Spacer(modifier = Modifier.height(20.dp))
+
+                LazyVerticalGrid(// 🌟 核心：设置最小宽度为 150.dp，系统自动决定列数
+                    columns = GridCells.Adaptive(minSize = 360.dp)
+                ) {
+                    items(appList) { item ->
+                        ShowAppInfo(item, onClick = { item ->
+                            onItemClick(item.packageName)
+                        })
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShowAppInfo(appInfo: AppInfo, onClick:(AppInfo) -> Unit, modifier: Modifier = Modifier) {
+
+    // 使用 Card 或 Surface 来自动处理圆角和深色模式背景
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(6.dp)
+            .clip(RoundedCornerShape(24.dp))
+            .clickable { onClick(appInfo) }, // 左右外边距
+        shape = RoundedCornerShape(24.dp), // 设置较大的圆角
+        colors = CardDefaults.cardColors(
+            // 关键：容器颜色会自动随系统深/浅色模式切换
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp) // 如果不需要阴影可以设为0
+    ){
+        Row(modifier = Modifier
+            .fillMaxWidth()
+            .padding(10.dp)
+            , horizontalArrangement = Arrangement.SpaceBetween){
+            Box(modifier=Modifier.weight(1f)){
+                Row {
+                    if(appInfo.icon != null)
+                        Image(bitmap = appInfo.icon.asImageBitmap(), contentDescription = appInfo.appName,
+                            modifier = Modifier
+                                .width(60.dp)
+                                .height(60.dp)
+                                .padding(10.dp))
+                    Column(modifier = Modifier
+                        .align(Alignment.CenterVertically)) {
+                        Row{
+                            Text(
+                                text = appInfo.appName,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = modifier
+                            )
+                            // 这个 Spacer 会占据所有剩余空间
+                            Spacer(modifier = Modifier.weight(1f))
+                            if(appInfo.supportFCM)
+                                Icon(painterResource(R.drawable.cloud_done_24px),
+                                    contentDescription = stringResource(R.string.shortcut_shortlabel_GcmDiagnostics),
+                                    tint = MaterialTheme.colorScheme.onSurface,
+                                    modifier=Modifier.padding(4.dp, 4.dp, 10.dp, 4.dp))
+                        }
+
+                        Text(
+                            text = appInfo.packageName,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = modifier,
+                            fontSize = 12.sp
+                        )
+                    }
+
+                }
+            }
+        }
+    }
+}
+
+fun drawableToBitmap(drawable: Drawable): Bitmap {
+    if (drawable is BitmapDrawable) {
+        return drawable.bitmap
+    }
+
+    val bitmap = Bitmap.createBitmap(
+        drawable.intrinsicWidth,
+        drawable.intrinsicHeight,
+        Bitmap.Config.ARGB_8888
+    )
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, canvas.width, canvas.height)
+    drawable.draw(canvas)
+    return bitmap
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchPage(onItemClick: (String) -> Unit ={} , onBackBtnPressed: () -> Unit ={} ,viewModel: AppListViewModel = viewModel()){
+    val fullAppList: List<AppInfo> by viewModel.appList.collectAsStateWithLifecycle()
+
+    SimpleSearchBar(fullAppList, onItemClick, onBackBtnPressed)
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun HelpPage(onBackBtnPressed:()->Unit = {}){
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(rememberTopAppBarState())
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(id = R.string.toolbar_help))
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer // 滚动后也不变色
+                ),
+                navigationIcon = {
+                    IconButton(onClick = { onBackBtnPressed() }) {
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.toolbar_back))
+                    }
+                },
+                scrollBehavior = scrollBehavior)
+        }
+    ) { innerPadding ->
+        Column(modifier = Modifier.padding(innerPadding).
+        verticalScroll(rememberScrollState()) // 使内容可滚动
+        ){
+            //Text(stringResource(R.string.help_text), modifier = Modifier.padding(20.dp))
+            // 使用 Spacer 手动空行
+            Spacer(modifier = Modifier.height(20.dp))
+
+            HelpTitle(R.string.help_whatsfcm)
+            HelpDescription(R.string.help_whatsfcm_description)
+
+            HelpTitle(R.string.help_user_guide)
+            HelpDescription(R.string.help_user_guide_1)
+            HelpDescription(R.string.help_user_guide_2)
+            HelpDescription(R.string.help_user_guide_3)
+            HelpDescription(R.string.help_user_guide_4)
+
+            Spacer(modifier = Modifier.weight(1f)) // 对应 layout_alignParentBottom 的效果
+
+            // 底部版权声明
+            Text(
+                text = stringResource(R.string.help_copyright_statement_google),
+                fontSize = 12.sp,
+                color = Color.Gray,
+                modifier = Modifier
+                    .padding(vertical = 20.dp, horizontal = 25.dp)
+                    .align(Alignment.CenterHorizontally)
+            )
+        }
+    }
+}
+
+// 封装一个通用的标题样式
+@Composable
+fun HelpTitle(textRes: Int) {
+    Text(
+        text = stringResource(textRes),
+        fontSize = 20.sp,
+        modifier = Modifier.padding(vertical = 5.dp, horizontal = 25.dp)
+    )
+}
+
+// 封装一个通用的描述正文样式
+@Composable
+fun HelpDescription(textRes: Int) {
+    Text(
+        text = stringResource(textRes),
+        fontSize = 16.sp,
+        modifier = Modifier.padding(vertical = 20.dp, horizontal = 25.dp)
+    )
+}
+
+@Preview
+@Composable
+fun HelpPagePreview() {
+    MaterialTheme{
+        HelpPage()
+    }
+}
+
+@Preview
+@Composable
+fun AppListPreview() {
+    MaterialTheme{
+        AppListScreen()
     }
 }
